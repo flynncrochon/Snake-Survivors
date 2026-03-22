@@ -4,7 +4,7 @@ const BASE_COOLDOWN = 4000;
 const FLIGHT_DURATION = 0.9;
 const MAX_ARC_HEIGHT = 7;
 const POOL_DURATION = 4.0;
-const POOL_DAMAGE_INTERVAL = 0.4;
+const POOL_DAMAGE_INTERVAL = 0.35;
 const BASE_POOL_RADIUS = 2.2;
 const POOL_RADIUS_PER_LEVEL = 0.35;
 const MAX_TRAIL_POINTS = 40;
@@ -28,7 +28,7 @@ export class PoisonMortar {
     }
 
     get_damage() {
-        return (1 + Math.floor(this.level / 3)) * 100;
+        return (1 + Math.floor(this.level / 3)) * 125;
     }
 
     update(dt, snake, enemy_manager, arena, particles, cell_size, damage_numbers) {

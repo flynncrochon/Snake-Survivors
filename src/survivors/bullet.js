@@ -6,10 +6,10 @@ export class Bullet {
         this.y = y;
         this.dx = dx;
         this.dy = dy;
-        this.speed = 20;
+        this.speed = 22;
         this.radius = 0.15;
-        this.life = 0.5;
-        this.max_life = 0.5;
+        this.life = 0.55;
+        this.max_life = 0.55;
         this.age = 0;
         this.wobble = Math.random() * Math.PI * 2;
         this.alive = true;

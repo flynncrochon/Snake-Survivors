@@ -29,7 +29,7 @@ export class SnakeNest {
     }
 
     get_damage() {
-        return (1 + Math.floor(this.level / 3)) * 100;
+        return (1 + Math.floor(this.level / 3)) * 25;
     }
 
     get_max_ticks() {

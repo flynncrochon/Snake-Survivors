@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Black rounded background -->
+  <rect width="32" height="32" rx="6" fill="#111"/>
+
+  <!-- Snake body - thick S-curve with tapered segments -->
+  <path d="M8 25 C8 21, 11 19, 14 19 C17 19, 19 17, 19 14 C19 11, 21 9, 24 9"
+        stroke="white" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+
+  <!-- Snake head -->
+  <circle cx="25" cy="9" r="3.5" fill="white"/>
+
+  <!-- Snake eye -->
+  <circle cx="26.2" cy="8.2" r="1.1" fill="#111"/>
+
+  <!-- Tongue -->
+  <line x1="28.2" y1="9" x2="30" y2="7.5" stroke="#e33" stroke-width="0.8" stroke-linecap="round"/>
+  <line x1="28.2" y1="9" x2="30" y2="10" stroke="#e33" stroke-width="0.8" stroke-linecap="round"/>
+
+  <!-- Tail taper -->
+  <path d="M8 25 C6.5 26.5, 5 27, 4 26.5" stroke="white" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+
+  <!-- Body scale pattern - subtle dots along the curve -->
+  <circle cx="11" cy="21" r="0.6" fill="rgba(255,255,255,0.3)"/>
+  <circle cx="14" cy="19" r="0.6" fill="rgba(255,255,255,0.3)"/>
+  <circle cx="17" cy="17" r="0.6" fill="rgba(255,255,255,0.3)"/>
+  <circle cx="19" cy="14" r="0.6" fill="rgba(255,255,255,0.3)"/>
+  <circle cx="21" cy="11.5" r="0.6" fill="rgba(255,255,255,0.3)"/>
+</svg>

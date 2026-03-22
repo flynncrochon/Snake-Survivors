@@ -11,6 +11,7 @@ export class EnemyManager {
         this.game_start_time = performance.now();
         this.player_hp = 5;
         this.player_i_frames = 0;
+        this.excluded_region = null;
     }
 
     get_difficulty() {
@@ -33,7 +34,7 @@ export class EnemyManager {
         this.spawn_accum += dt * 1000;
         if (this.spawn_accum >= diff.spawn_interval && this.enemies.length < MAX_ENEMIES) {
             this.spawn_accum = 0;
-            this.spawn_wave(head.x + 0.5, head.y + 0.5, diff.spawn_count, diff.speed, diff.hp, diff.length);
+            this.spawn_wave(head.x + 0.5, head.y + 0.5, diff.spawn_count, diff.speed, diff.hp, diff.length, player_snake, arena.food);
         }
 
         const tx = head.x + 0.5;
@@ -41,6 +42,26 @@ export class EnemyManager {
         const now = performance.now();
         for (const e of this.enemies) {
             e.update(now, tx, ty, this.arena_size);
+        }
+
+        // Kill enemies that moved into the enclosed region
+        if (this.excluded_region) {
+            for (const e of this.enemies) {
+                if (!e.alive) continue;
+                const ex = e.segments[0].x;
+                const ey = e.segments[0].y;
+                if (this.excluded_region.has(ex + ',' + ey)) {
+                    e.hp = 0;
+                    e.alive = false;
+                    this.total_kills++;
+                    if (ex >= 0 && ex < this.arena_size && ey >= 0 && ey < this.arena_size) {
+                        arena.food.push({ x: ex, y: ey });
+                    }
+                    if (particles) {
+                        particles.emit(e.x * cell_size, e.y * cell_size, 8, e.color, 3);
+                    }
+                }
+            }
         }
 
         // Collision: grid-cell overlap between enemy segments and player segments
@@ -63,7 +84,7 @@ export class EnemyManager {
                         } else {
                             const dead = e.take_damage();
                             if (damage_numbers) {
-                                damage_numbers.emit(e.x, e.y - e.radius, 100, false);
+                                damage_numbers.emit(e.x, e.y - e.radius, 125, false);
                             }
                             if (dead) {
                                 const fx = e.segments[0].x;
@@ -101,18 +122,46 @@ export class EnemyManager {
         }
     }
 
-    spawn_wave(px, py, count, speed, hp, length) {
+    spawn_wave(px, py, count, speed, hp, length, player_snake, food) {
+        // Build set of occupied cells (player segments + food)
+        const occupied = new Set();
+        if (player_snake) {
+            for (const seg of player_snake.segments) {
+                occupied.add(seg.x + ',' + seg.y);
+            }
+        }
+        if (food) {
+            for (const f of food) {
+                occupied.add(f.x + ',' + f.y);
+            }
+        }
+
         for (let i = 0; i < count; i++) {
             if (this.enemies.length >= MAX_ENEMIES) break;
-            const angle = Math.random() * Math.PI * 2;
-            const dist = 15 + Math.random() * 4;
-            let x = px + Math.cos(angle) * dist;
-            let y = py + Math.sin(angle) * dist;
 
-            x = Math.max(1, Math.min(this.arena_size - 2, x));
-            y = Math.max(1, Math.min(this.arena_size - 2, y));
+            let x, y, gx, gy;
+            let valid = false;
+            for (let attempt = 0; attempt < 10; attempt++) {
+                const angle = Math.random() * Math.PI * 2;
+                const dist = 15 + Math.random() * 4;
+                x = px + Math.cos(angle) * dist;
+                y = py + Math.sin(angle) * dist;
 
-            this.enemies.push(new Enemy(x, y, speed, hp, length));
+                x = Math.max(1, Math.min(this.arena_size - 2, x));
+                y = Math.max(1, Math.min(this.arena_size - 2, y));
+
+                gx = Math.round(x);
+                gy = Math.round(y);
+                const key = gx + ',' + gy;
+                if (!occupied.has(key) && !(this.excluded_region && this.excluded_region.has(key))) {
+                    valid = true;
+                    break;
+                }
+            }
+
+            if (valid) {
+                this.enemies.push(new Enemy(x, y, speed, hp, length));
+            }
         }
     }
 }

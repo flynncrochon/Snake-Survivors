@@ -115,7 +115,7 @@ export class Enemy {
         this.y = head.y + 0.5;
     }
 
-    take_damage(amount = 100) {
+    take_damage(amount = 125) {
         this.hp -= amount;
         if (this.hp <= 0) {
             this.alive = false;

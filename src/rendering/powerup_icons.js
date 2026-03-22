@@ -32,15 +32,21 @@ const SVG_DEFS = {
         <line x1="44" y1="32" x2="60" y2="32" stroke="#ff4444" stroke-width="2.5" stroke-linecap="round"/>
     </svg>`,
 
-    // Gorger — fanged mouth
+    // Gorger — ravenous gullet
     gorger: `<svg ${S}>
-        <path d="M8 22 Q32 30 56 22" fill="#cc8800" stroke="#ffaa00" stroke-width="2" stroke-linejoin="round"/>
-        <path d="M8 42 Q32 34 56 42" fill="#cc8800" stroke="#ffaa00" stroke-width="2" stroke-linejoin="round"/>
-        <polygon points="16,22 22,34 10,34" fill="#fff"/>
-        <polygon points="30,24 36,34 24,34" fill="#fff"/>
-        <polygon points="44,22 50,34 38,34" fill="#fff"/>
-        <polygon points="20,42 26,30 14,30" fill="#fff" opacity="0.7"/>
-        <polygon points="38,42 44,30 32,30" fill="#fff" opacity="0.7"/>
+        <ellipse cx="32" cy="32" rx="22" ry="18" fill="#aa5500" stroke="#ffaa00" stroke-width="2.5"/>
+        <ellipse cx="32" cy="32" rx="14" ry="10" fill="#220000"/>
+        <polygon points="14,24 20,32 12,30" fill="#fff"/>
+        <polygon points="24,22 28,32 20,30" fill="#fff"/>
+        <polygon points="36,22 40,30 32,32" fill="#fff"/>
+        <polygon points="50,24 52,30 44,32" fill="#fff"/>
+        <polygon points="18,42 22,34 14,34" fill="#fff" opacity="0.8"/>
+        <polygon points="32,43 36,34 28,34" fill="#fff" opacity="0.8"/>
+        <polygon points="46,42 50,34 42,34" fill="#fff" opacity="0.8"/>
+        <circle cx="22" cy="14" r="4" fill="#ff6600" opacity="0.9"/>
+        <circle cx="42" cy="14" r="4" fill="#ff6600" opacity="0.9"/>
+        <circle cx="22" cy="14" r="1.5" fill="#220000"/>
+        <circle cx="42" cy="14" r="1.5" fill="#220000"/>
     </svg>`,
 
     // Plague Mortar — skull bomb
@@ -55,27 +61,30 @@ const SVG_DEFS = {
         <circle cx="42" cy="4" r="2" fill="#ffee66" opacity="0.6"/>
     </svg>`,
 
-    // Constrictor — coiled snake
-    constrictor: `<svg ${S}>
-        <circle cx="32" cy="34" r="18" fill="none" stroke="#ff4444" stroke-width="5" stroke-linecap="round" stroke-dasharray="0 14 90" transform="rotate(-90 32 34)"/>
-        <circle cx="32" cy="34" r="10" fill="none" stroke="#cc2222" stroke-width="4" stroke-linecap="round" stroke-dasharray="0 10 54" transform="rotate(60 32 34)"/>
-        <circle cx="46" cy="18" r="5" fill="#ff4444"/>
-        <circle cx="44" cy="17" r="1.5" fill="#fff"/>
-        <circle cx="49" cy="17" r="1.5" fill="#fff"/>
-    </svg>`,
 
-    // Snake Nest — egg with baby snake emerging
+    // Snake Nest — three small green snakes
     snake_nest: `<svg ${S}>
-        <path d="M18 52 Q14 50 16 46 Q12 42 18 42 Q16 38 22 40" fill="none" stroke="#886633" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M46 52 Q50 50 48 46 Q52 42 46 42 Q48 38 42 40" fill="none" stroke="#886633" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-        <ellipse cx="32" cy="38" rx="15" ry="18" fill="#dd9922"/>
-        <ellipse cx="32" cy="38" rx="15" ry="18" fill="none" stroke="#ffbb33" stroke-width="1.5"/>
-        <path d="M26 28 L32 22 L38 28" fill="none" stroke="#ffbb33" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/>
-        <path d="M32 20 L32 12" fill="none" stroke="#44dd88" stroke-width="3" stroke-linecap="round"/>
-        <circle cx="30" cy="10" r="2" fill="#44dd88"/>
-        <circle cx="34" cy="10" r="2" fill="#44dd88"/>
-        <circle cx="29.5" cy="9.5" r="0.8" fill="#115533"/>
-        <circle cx="33.5" cy="9.5" r="0.8" fill="#115533"/>
+        <!-- Snake 1 (left) — curving right -->
+        <path d="M10 52 Q8 42 14 34 Q20 26 16 18" fill="none" stroke="#22bb44" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M10 52 Q8 42 14 34 Q20 26 16 18" fill="none" stroke="#44ee66" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="15" cy="16" r="3.5" fill="#22bb44"/>
+        <circle cx="13.5" cy="15" r="1" fill="#115533"/>
+        <circle cx="16.5" cy="15" r="1" fill="#115533"/>
+        <path d="M13 19 L15 21 L17 19" fill="none" stroke="#ff4444" stroke-width="1" stroke-linecap="round"/>
+        <!-- Snake 2 (center) — S-curve, tallest -->
+        <path d="M32 54 Q38 44 28 36 Q18 28 32 16" fill="none" stroke="#22bb44" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M32 54 Q38 44 28 36 Q18 28 32 16" fill="none" stroke="#44ee66" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="32" cy="13.5" r="4" fill="#22bb44"/>
+        <circle cx="30" cy="12.5" r="1.2" fill="#115533"/>
+        <circle cx="34" cy="12.5" r="1.2" fill="#115533"/>
+        <path d="M30 16.5 L32 18.5 L34 16.5" fill="none" stroke="#ff4444" stroke-width="1" stroke-linecap="round"/>
+        <!-- Snake 3 (right) — curving left -->
+        <path d="M54 52 Q56 42 50 34 Q44 26 48 18" fill="none" stroke="#22bb44" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M54 52 Q56 42 50 34 Q44 26 48 18" fill="none" stroke="#44ee66" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="49" cy="16" r="3.5" fill="#22bb44"/>
+        <circle cx="47.5" cy="15" r="1" fill="#115533"/>
+        <circle cx="50.5" cy="15" r="1" fill="#115533"/>
+        <path d="M47 19 L49 21 L51 19" fill="none" stroke="#ff4444" stroke-width="1" stroke-linecap="round"/>
     </svg>`,
 
     // Hydra Fangs — triple fang/arrow burst
@@ -84,6 +93,16 @@ const SVG_DEFS = {
         <path d="M32 48 L32 12 L26 22" fill="none" stroke="#dd88ff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M32 12 L38 22" fill="none" stroke="#dd88ff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M42 48 L42 20 L48 28" fill="none" stroke="#cc66ff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>`,
+
+    // Viper Fangs — pair of curved fangs with venom drops
+    fangs: `<svg ${S}>
+        <path d="M20 12 Q18 32 24 52" fill="none" stroke="#ffe8e8" stroke-width="5" stroke-linecap="round"/>
+        <path d="M20 12 Q16 28 22 48" fill="none" stroke="#ff6680" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="24" cy="54" r="2.5" fill="#ff4466" opacity="0.8"/>
+        <path d="M44 12 Q46 32 40 52" fill="none" stroke="#ffe8e8" stroke-width="5" stroke-linecap="round"/>
+        <path d="M44 12 Q48 28 42 48" fill="none" stroke="#ff6680" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="40" cy="54" r="2.5" fill="#ff4466" opacity="0.8"/>
     </svg>`,
 
     // Chronofield — clock with tick marks

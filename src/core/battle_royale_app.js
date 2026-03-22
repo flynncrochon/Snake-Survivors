@@ -1,4 +1,4 @@
-import { ARENA_SIZE, SOLO_ARENA_SIZE, LOGICAL_SIZE, CELL_SIZE, TICK_RATE, AI_COUNT, FOOD_RESPAWN_INTERVAL, FOOD_COUNT, VS_ARENA_SIZE, VS_VIEWPORT_CELLS, VS_TICK_RATE, VS_FOOD_COUNT } from '../constants.js';
+import { ARENA_SIZE, SOLO_ARENA_SIZE, TICK_RATE, AI_COUNT, FOOD_RESPAWN_INTERVAL, VS_ARENA_SIZE, VS_VIEWPORT_CELLS, VS_TICK_RATE, VS_FOOD_COUNT } from '../constants.js';
 import { StateMachine } from './state_machine.js';
 import { GameLoop } from './game_loop.js';
 import { Renderer } from '../rendering/renderer.js';
@@ -21,6 +21,7 @@ import { BulletManager } from '../survivors/bullet_manager.js';
 import { DamageNumberSystem } from '../survivors/damage_numbers.js';
 import { PoisonMortar } from '../survivors/poison_mortar.js';
 import { SnakeNest } from '../survivors/snake_nest.js';
+import { FangBarrage } from '../survivors/fang_barrage.js';
 import { get_powerup_icon } from '../rendering/powerup_icons.js';
 
 const AI_COLORS = [
@@ -32,9 +33,8 @@ const AI_COLORS = [
 const SOLO_FOOD_COUNT = 5;
 const SOLO_TICK_RATE = 130;
 const SOLO_BOOST_TICK_RATE = 40;
-const GREEN_BOOST_BASE_MS = 1000;
-const GREEN_BOOST_SCALE_MS = 190;
-const SOLO_CELL_SIZE = LOGICAL_SIZE / SOLO_ARENA_SIZE;
+const GREEN_BOOST_BASE_MS = 250;
+const GREEN_BOOST_SCALE_MS = 120;
 const INVULN_DURATION = 2000;
 const VS_INVULN_DURATION = 3000;
 
@@ -42,12 +42,13 @@ const VS_POWERUP_DEFS = [
     { id: 'magnet',      name: 'Graviton',    description: '+1 fruit pickup radius',       rarity: 'common' },
     { id: 'atk_speed',   name: 'Rapid Fire',   description: '+15% attack speed',            rarity: 'uncommon' },
     { id: 'crit',        name: 'Dead Eye',     description: '+10% crit chance (2\u00d7 dmg)', rarity: 'rare' },
-    { id: 'gorger',      name: 'Gorger',       description: '+1 bullet dmg, +1 tail growth', rarity: 'legendary' },
+    { id: 'gorger',      name: 'Ravenous Maw', description: 'Insatiable hunger — fangs hit harder and fruits feed more', rarity: 'legendary' },
     { id: 'plague',      name: 'Plague Mortar', description: 'Lob toxic bombs that leave poison zones', rarity: 'rare' },
-    { id: 'constrictor', name: 'Constrictor',  description: 'Encircle enemies with your body to crush them all and collect fruit inside', rarity: 'ultra', one_time: true },
+
     { id: 'snake_nest',  name: 'Snake Nest',   description: 'Lob an egg that hatches mini snakes to hunt enemies', rarity: 'rare' },
     { id: 'chronofield', name: 'Chronofield',  description: '+25% duration on all timed effects', rarity: 'uncommon' },
     { id: 'multishot',   name: 'Hydra Fangs',  description: '+1 extra projectile to all weapons',  rarity: 'rare', max_rank: 3 },
+    { id: 'fangs',       name: 'Viper Fangs',  description: 'Fire homing fang projectiles at nearby enemies', rarity: 'uncommon' },
 ];
 
 export class BattleRoyaleApp {
@@ -105,11 +106,11 @@ export class BattleRoyaleApp {
         this.vs_level_up_active = false;
         this.vs_level_up_choices = [];
         this.vs_level_up_index = 0;
-        this.vs_powerups = { magnet: 0, atk_speed: 0, crit: 0, gorger: 0, plague: 0, constrictor: 0, snake_nest: 0, chronofield: 0, multishot: 0 };
+        this.vs_powerups = { magnet: 0, atk_speed: 0, crit: 0, gorger: 0, plague: 0, snake_nest: 0, chronofield: 0, multishot: 0, fangs: 0 };
         this.vs_invuln_start = 0;
         this.poison_mortar = null;
         this.snake_nest = null;
-        this.snake_nest = null;
+        this.fang_barrage = null;
 
         this.paused = false;
         this.pause_start = 0;
@@ -134,7 +135,7 @@ export class BattleRoyaleApp {
             enter() {
                 self.menu_index = 0;
                 self.paused = false;
-                window.removeEventListener('resize', self._on_resize);
+                window.addEventListener('resize', self._on_resize);
                 self.renderer.reset_to_square();
             },
             render() { self.render_main_menu(); },
@@ -350,6 +351,7 @@ export class BattleRoyaleApp {
         this.damage_numbers = new DamageNumberSystem();
         this.poison_mortar = new PoisonMortar();
         this.snake_nest = new SnakeNest();
+        this.fang_barrage = new FangBarrage();
 
         const cx = Math.floor(VS_ARENA_SIZE / 2);
         const cy = Math.floor(VS_ARENA_SIZE / 2);
@@ -367,19 +369,24 @@ export class BattleRoyaleApp {
         this.vs_level_up_active = false;
         this.vs_level_up_choices = [];
         this.vs_level_up_index = 0;
-        this.vs_powerups = { magnet: 0, atk_speed: 0, crit: 0, gorger: 0, plague: 0, constrictor: 0, snake_nest: 0, chronofield: 0, multishot: 0 };
+        this.vs_powerups = { magnet: 0, atk_speed: 0, crit: 0, gorger: 0, plague: 0, snake_nest: 0, chronofield: 0, multishot: 0, fangs: 0 };
         this.vs_invuln_start = 0;
+
+        this.enclosed_region = null;
 
         this.arena.spawn_food_count(this.snakes, VS_FOOD_COUNT);
     }
 
     _handle_resize() {
-        if (this.mode !== 'survivors') return;
-        const vs_cell_size = Math.min(window.innerWidth, window.innerHeight) / VS_VIEWPORT_CELLS;
-        this.renderer.set_fullscreen(vs_cell_size);
-        if (this.camera) {
-            this.camera.cell_size = vs_cell_size;
-            this.camera.resize(this.renderer.logical_width, this.renderer.logical_height);
+        if (this.mode === 'survivors') {
+            const vs_cell_size = Math.min(window.innerWidth, window.innerHeight) / VS_VIEWPORT_CELLS;
+            this.renderer.set_fullscreen(vs_cell_size);
+            if (this.camera) {
+                this.camera.cell_size = vs_cell_size;
+                this.camera.resize(this.renderer.logical_width, this.renderer.logical_height);
+            }
+        } else {
+            this.renderer.handle_resize();
         }
     }
 
@@ -488,6 +495,7 @@ export class BattleRoyaleApp {
         if (!snake || !snake.alive) return;
 
         const cell = this.renderer.cell_size;
+        this.enemy_manager.excluded_region = this.enclosed_region;
         this.enemy_manager.update(dt, snake, this.arena, this.particles, cell, this.damage_numbers);
 
         this.bullet_manager.update(dt, snake, this.enemy_manager, this.arena, this.particles, cell, this.damage_numbers);
@@ -498,6 +506,10 @@ export class BattleRoyaleApp {
 
         if (this.snake_nest) {
             this.snake_nest.update(dt, snake, this.enemy_manager, this.arena, this.particles, cell, this.damage_numbers);
+        }
+
+        if (this.fang_barrage) {
+            this.fang_barrage.update(dt, snake, this.enemy_manager, this.arena, this.particles, cell, this.damage_numbers);
         }
 
         this.damage_numbers.update(dt);
@@ -559,7 +571,7 @@ export class BattleRoyaleApp {
 
             const died = this.snake_controller.tick_all(this.snakes, this.arena);
 
-            if (this.vs_powerups.constrictor && snake.alive) {
+            if (snake.alive) {
                 this.check_constrictor_enclosure(snake);
             }
 
@@ -710,7 +722,7 @@ export class BattleRoyaleApp {
 
             if (this.green_food && snake.alive) {
                 if (snake.head.x === this.green_food.x && snake.head.y === this.green_food.y) {
-                    const boost_duration = GREEN_BOOST_BASE_MS + GREEN_BOOST_SCALE_MS * this.normal_fruits_eaten * this.normal_fruits_eaten;
+                    const boost_duration = GREEN_BOOST_BASE_MS + GREEN_BOOST_SCALE_MS * this.normal_fruits_eaten;
                     this.green_food = null;
                     this.normal_fruits_eaten = 0;
                     snake.grow_pending += 2;
@@ -775,9 +787,10 @@ export class BattleRoyaleApp {
             }
 
             const died = this.snake_controller.tick_all(this.snakes, this.arena);
+            const cell = this.renderer.cell_size;
             for (const snake of died) {
-                const cx = (snake.head.x + 0.5) * CELL_SIZE;
-                const cy = (snake.head.y + 0.5) * CELL_SIZE;
+                const cx = (snake.head.x + 0.5) * cell;
+                const cy = (snake.head.y + 0.5) * cell;
                 this.particles.emit(cx, cy, 15, snake.color, 4);
                 if (snake.is_player && this.fsm.current === 'PLAYING') {
                     this.fsm.transition('DEATH');
@@ -788,8 +801,8 @@ export class BattleRoyaleApp {
             if (this.zone_shrinker) this.zone_shrinker.update(this.snakes);
 
             if (this.player_snake && !this.player_snake.alive && this.fsm.current === 'PLAYING') {
-                const cx = (this.player_snake.head.x + 0.5) * CELL_SIZE;
-                const cy = (this.player_snake.head.y + 0.5) * CELL_SIZE;
+                const cx = (this.player_snake.head.x + 0.5) * cell;
+                const cy = (this.player_snake.head.y + 0.5) * cell;
                 this.particles.emit(cx, cy, 15, '#fff', 4);
                 this.fsm.transition('DEATH');
             }
@@ -979,7 +992,7 @@ export class BattleRoyaleApp {
         }
 
         if (!this.solo_autopilot.active && !this.invulnerable) {
-            const boost_secs = ((GREEN_BOOST_BASE_MS + GREEN_BOOST_SCALE_MS * this.normal_fruits_eaten * this.normal_fruits_eaten) / 1000).toFixed(1);
+            const boost_secs = ((GREEN_BOOST_BASE_MS + GREEN_BOOST_SCALE_MS * this.normal_fruits_eaten) / 1000).toFixed(1);
             ctx.fillStyle = '#0f0';
             ctx.font = '11px monospace';
             ctx.textAlign = 'right';
@@ -1090,6 +1103,10 @@ export class BattleRoyaleApp {
             const cox = this.camera.half_view_x - this.camera.x;
             const coy = this.camera.half_view_y - this.camera.y;
             this.snake_nest.render_mini_snakes(ctx, cell, t, cox, coy);
+        }
+
+        if (this.fang_barrage) {
+            this.fang_barrage.render(ctx, cell);
         }
 
         this.particles.render(ctx);
@@ -1214,7 +1231,7 @@ export class BattleRoyaleApp {
                 return `Crit chance: ${lvl * 10}% \u2192 ${(lvl + 1) * 10}%`;
             }
             case 'gorger': {
-                return `Bullet dmg: ${1 + lvl} \u2192 ${2 + lvl} | Growth: \u00d7${1 + lvl} \u2192 \u00d7${2 + lvl}`;
+                return `Fang dmg: ${1 + lvl} \u2192 ${2 + lvl} | Growth: \u00d7${1 + lvl} \u2192 \u00d7${2 + lvl}`;
             }
             case 'plague': {
                 if (lvl === 0) return 'Lob toxic bombs: 2.2 radius, 4.0s cooldown';
@@ -1224,9 +1241,7 @@ export class BattleRoyaleApp {
                 const next_r = (2.2 + lvl * 0.35).toFixed(1);
                 return `CD: ${cur_cd}s\u2192${next_cd}s | Radius: ${cur_r}\u2192${next_r}`;
             }
-            case 'constrictor': {
-                return lvl ? 'ACTIVE — encircle enemies to crush them' : 'Encircle enemies with your body to annihilate them';
-            }
+
             case 'snake_nest': {
                 if (lvl === 0) return 'Hatch 3 mini snakes that hunt enemies';
                 const cur_count = 3 + Math.floor((lvl - 1) / 2);
@@ -1242,6 +1257,14 @@ export class BattleRoyaleApp {
             }
             case 'multishot': {
                 return `Extra projectiles on all weapons: +${lvl} → +${lvl + 1} (max +3)`;
+            }
+            case 'fangs': {
+                if (lvl === 0) return 'Fire 1 homing fang, 2.5s cooldown';
+                const cur_count = lvl;
+                const next_count = lvl + 1;
+                const cur_cd = (Math.max(1, 2.5 - (lvl - 1) * 0.25)).toFixed(1);
+                const next_cd = (Math.max(1, 2.5 - lvl * 0.25)).toFixed(1);
+                return `Fangs: ${cur_count}→${next_count} | CD: ${cur_cd}s→${next_cd}s`;
             }
             default: return '';
         }
@@ -1272,12 +1295,21 @@ export class BattleRoyaleApp {
             this.snake_nest.duration_mult = dur_mult;
             this.snake_nest.extra_projectiles = extra;
         }
+        if (this.fang_barrage) {
+            this.fang_barrage.level = this.vs_powerups.fangs;
+            this.fang_barrage.extra_projectiles = extra;
+        }
     }
 
     check_constrictor_enclosure(snake) {
         const segs = snake.segments;
-        if (segs.length < 8) return;
+        if (segs.length < 8) {
+            this.enclosed_region = null;
+            this.enemy_manager.excluded_region = null;
+            return;
+        }
 
+        // --- Build body set and bounding box ---
         const body_set = new Set();
         let min_x = Infinity, max_x = -Infinity, min_y = Infinity, max_y = -Infinity;
         for (const seg of segs) {
@@ -1288,59 +1320,89 @@ export class BattleRoyaleApp {
             if (seg.y > max_y) max_y = seg.y;
         }
 
+        // Early-out: bbox must be at least 3x3 to contain any interior
+        if (max_x - min_x < 2 || max_y - min_y < 2) {
+            this.enclosed_region = null;
+            this.enemy_manager.excluded_region = null;
+            return;
+        }
+
+        // Expand bounding box by 1 for flood-fill border
         min_x--; max_x++; min_y--; max_y++;
 
-        const outside = new Set();
-        const queue = [];
+        // --- Flood-fill from border to find outside cells ---
+        const w = max_x - min_x + 1;
+        const h = max_y - min_y + 1;
+        // Use typed array bitmask instead of Set for speed
+        const visited = new Uint8Array(w * h);
+        const queue = new Int32Array(w * h * 2);
+        let qHead = 0, qTail = 0;
+
+        // Seed border cells
         for (let x = min_x; x <= max_x; x++) {
             for (const y of [min_y, max_y]) {
-                const key = x + ',' + y;
-                if (!body_set.has(key) && !outside.has(key)) {
-                    outside.add(key);
-                    queue.push(x, y);
+                if (!body_set.has(x + ',' + y)) {
+                    const idx = (x - min_x) + (y - min_y) * w;
+                    if (!visited[idx]) {
+                        visited[idx] = 1;
+                        queue[qTail++] = x;
+                        queue[qTail++] = y;
+                    }
                 }
             }
         }
         for (let y = min_y + 1; y < max_y; y++) {
             for (const x of [min_x, max_x]) {
-                const key = x + ',' + y;
-                if (!body_set.has(key) && !outside.has(key)) {
-                    outside.add(key);
-                    queue.push(x, y);
+                if (!body_set.has(x + ',' + y)) {
+                    const idx = (x - min_x) + (y - min_y) * w;
+                    if (!visited[idx]) {
+                        visited[idx] = 1;
+                        queue[qTail++] = x;
+                        queue[qTail++] = y;
+                    }
                 }
             }
         }
 
-        let qi = 0;
-        while (qi < queue.length) {
-            const qx = queue[qi++];
-            const qy = queue[qi++];
-            for (const [dx, dy] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
-                const nx = qx + dx;
-                const ny = qy + dy;
-                if (nx < min_x || nx > max_x || ny < min_y || ny > max_y) continue;
-                const key = nx + ',' + ny;
-                if (body_set.has(key) || outside.has(key)) continue;
-                outside.add(key);
-                queue.push(nx, ny);
+        while (qHead < qTail) {
+            const qx = queue[qHead++];
+            const qy = queue[qHead++];
+            for (let d = 0; d < 4; d++) {
+                const ax = qx + (d === 0 ? 1 : d === 1 ? -1 : 0);
+                const ay = qy + (d === 2 ? 1 : d === 3 ? -1 : 0);
+                if (ax < min_x || ax > max_x || ay < min_y || ay > max_y) continue;
+                const idx = (ax - min_x) + (ay - min_y) * w;
+                if (visited[idx]) continue;
+                if (body_set.has(ax + ',' + ay)) continue;
+                visited[idx] = 1;
+                queue[qTail++] = ax;
+                queue[qTail++] = ay;
             }
         }
 
-        const interior = [];
+        // --- Collect interior cells (not body, not outside) ---
+        const interior_set = new Set();
         for (let x = min_x + 1; x < max_x; x++) {
             for (let y = min_y + 1; y < max_y; y++) {
-                const key = x + ',' + y;
-                if (!body_set.has(key) && !outside.has(key)) {
-                    interior.push({ x, y });
+                const idx = (x - min_x) + (y - min_y) * w;
+                if (!visited[idx] && !body_set.has(x + ',' + y)) {
+                    interior_set.add(x + ',' + y);
                 }
             }
         }
 
-        if (interior.length === 0) return;
+        if (interior_set.size === 0) {
+            this.enclosed_region = null;
+            this.enemy_manager.excluded_region = null;
+            return;
+        }
 
+        // Store for spawn blocking (sync to enemy_manager immediately)
+        this.enclosed_region = interior_set;
+        this.enemy_manager.excluded_region = interior_set;
+
+        // --- One-time kill: crush all enemies inside ---
         const cell = this.renderer.cell_size;
-        const interior_set = new Set(interior.map(p => p.x + ',' + p.y));
-
         let crushed = 0;
         for (const e of this.enemy_manager.enemies) {
             if (!e.alive) continue;
@@ -1365,6 +1427,7 @@ export class BattleRoyaleApp {
             }
         }
 
+        // Collect all food inside the enclosure
         let collected = 0;
         for (let i = this.arena.food.length - 1; i >= 0; i--) {
             const f = this.arena.food[i];
@@ -1381,9 +1444,14 @@ export class BattleRoyaleApp {
                     this.particles.emit(seg.x * cell + cell / 2, seg.y * cell + cell / 2, 3, '#f22', 2);
                 }
             }
-            for (const p of interior) {
+            // Sparse interior particles
+            let particle_budget = 20;
+            for (const key of interior_set) {
+                if (particle_budget <= 0) break;
                 if (Math.random() < 0.4) {
-                    this.particles.emit((p.x + 0.5) * cell, (p.y + 0.5) * cell, 2, '#c00', 1.5);
+                    const [px, py] = key.split(',');
+                    this.particles.emit((+px + 0.5) * cell, (+py + 0.5) * cell, 2, '#c00', 1.5);
+                    particle_budget--;
                 }
             }
 
