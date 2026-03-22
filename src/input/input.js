@@ -37,6 +37,10 @@ export class Input {
             e.preventDefault();
             this.on_action('space');
         }
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            this.on_action('escape');
+        }
         if (e.key === 'Enter') {
             e.preventDefault();
             this.on_action('enter');

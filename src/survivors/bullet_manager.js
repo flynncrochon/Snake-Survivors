@@ -1,7 +1,8 @@
 import { Bullet } from './bullet.js';
 
-const MAX_BULLETS = 20;
+const MAX_BULLETS = 40;
 const FIRE_COOLDOWN = 400;
+const FANG_SPREAD = 0.3; // perpendicular offset for the two fangs
 const FIRE_RANGE = 8;
 const FIRE_RANGE_SQ = FIRE_RANGE * FIRE_RANGE;
 const FANG_CONE_COS = Math.cos(Math.PI / 4); // 45° half-angle = 90° forward cone
@@ -47,11 +48,17 @@ export class BulletManager {
                 }
             }
             if (nearest) {
-                // Aim toward the enemy — bullet will home in
+                // Aim toward the enemy — both fangs will home in
                 const dx = nearest.x - hx;
                 const dy = nearest.y - hy;
                 const len = Math.sqrt(dx * dx + dy * dy);
-                this.bullets.push(new Bullet(hx, hy, dx / len, dy / len, nearest));
+                const ndx = dx / len;
+                const ndy = dy / len;
+                // Perpendicular for spread offset
+                const px = -ndy * FANG_SPREAD;
+                const py = ndx * FANG_SPREAD;
+                this.bullets.push(new Bullet(hx + px, hy + py, ndx, ndy, nearest));
+                this.bullets.push(new Bullet(hx - px, hy - py, ndx, ndy, nearest));
                 this.last_fire_time = now;
             }
         }

@@ -108,6 +108,9 @@ export class BattleRoyaleApp {
         this.snake_nest = null;
         this.snake_nest = null;
 
+        this.paused = false;
+        this.pause_start = 0;
+
         this._on_resize = () => this._handle_resize();
 
         this.register_states();
@@ -127,6 +130,7 @@ export class BattleRoyaleApp {
         this.fsm.register('MAIN_MENU', {
             enter() {
                 self.menu_index = 0;
+                self.paused = false;
                 window.removeEventListener('resize', self._on_resize);
                 self.renderer.reset_to_square();
             },
@@ -153,7 +157,12 @@ export class BattleRoyaleApp {
 
         this.fsm.register('PLAYING', {
             update() { self.update_playing(); },
-            render() { self.render_playing(); },
+            render() {
+                self.render_playing();
+                if (self.paused) {
+                    self.render_pause_overlay();
+                }
+            },
         });
 
         this.fsm.register('VICTORY', {
@@ -231,6 +240,11 @@ export class BattleRoyaleApp {
                     }
                     return;
                 }
+                if (action === 'space' || action === 'escape') {
+                    this.toggle_pause();
+                    return;
+                }
+                if (this.paused) return;
                 if (action === 'direction') {
                     this.input.queue_direction(data, this.player_snake?.direction, false);
                 }
@@ -366,6 +380,42 @@ export class BattleRoyaleApp {
         }
     }
 
+    toggle_pause() {
+        if (!this.paused) {
+            this.paused = true;
+            this.pause_start = performance.now();
+        } else {
+            const pause_duration = performance.now() - this.pause_start;
+            this.paused = false;
+            this.last_tick_time += pause_duration;
+            this.last_food_spawn += pause_duration;
+            if (this.mode === 'survivors') {
+                this.vs_last_frame_time += pause_duration;
+                this.survivors_start_time += pause_duration;
+                if (this.vs_invuln_start > 0) this.vs_invuln_start += pause_duration;
+                if (this.enemy_manager) this.enemy_manager.game_start_time += pause_duration;
+                if (this.bullet_manager && this.bullet_manager.last_fire_time > 0) {
+                    this.bullet_manager.last_fire_time += pause_duration;
+                }
+                if (this.poison_mortar && this.poison_mortar.last_fire > 0) {
+                    this.poison_mortar.last_fire += pause_duration;
+                }
+                if (this.snake_nest && this.snake_nest.last_fire > 0) {
+                    this.snake_nest.last_fire += pause_duration;
+                }
+            }
+            if (this.mode === 'solo') {
+                if (this.invuln_start > 0) this.invuln_start += pause_duration;
+                if (this.solo_autopilot.active && this.solo_autopilot.start_time) {
+                    this.solo_autopilot.start_time += pause_duration;
+                }
+            }
+            if (this.zone_shrinker && this.zone_shrinker.last_shrink_time) {
+                this.zone_shrinker.last_shrink_time += pause_duration;
+            }
+        }
+    }
+
     generate_spawn_positions(count) {
         const positions = [];
         const margin = 8;
@@ -414,6 +464,7 @@ export class BattleRoyaleApp {
     }
 
     update_playing() {
+        if (this.paused) return;
         if (this.mode === 'solo') {
             this.update_solo();
         } else if (this.mode === 'survivors') {
@@ -947,6 +998,25 @@ export class BattleRoyaleApp {
             ctx.textAlign = 'center';
             ctx.fillText(`INVULNERABLE — ${secs}s`, size / 2, 12);
         }
+    }
+
+    render_pause_overlay() {
+        const ctx = this.renderer.ctx;
+        const w = this.renderer.logical_width;
+        const h = this.renderer.logical_height;
+
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+        ctx.fillRect(0, 0, w, h);
+
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 36px monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('PAUSED', w / 2, h / 2 - 20);
+
+        ctx.fillStyle = '#888';
+        ctx.font = '14px monospace';
+        ctx.fillText('Press Space to resume', w / 2, h / 2 + 20);
     }
 
     render_survivors_playing() {

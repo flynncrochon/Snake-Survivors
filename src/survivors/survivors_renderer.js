@@ -14,64 +14,75 @@ export class SurvivorsRenderer {
         for (const b of bullets) {
             if (!b.alive) continue;
 
-            const build_time = 0.08;
+            const build_time = 0.05;
             const t = Math.min(1, b.age / build_time);
-            const growth = 1 - (1 - t) * (1 - t);
+            const growth = 1 - (1 - t) * (1 - t) * (1 - t);
 
             const base_r = b.radius * cell_size * growth;
-            if (base_r < 0.3) continue;
+            if (base_r < 0.2) continue;
 
             const px = b.x * cell_size;
             const py = b.y * cell_size;
             const angle = Math.atan2(b.dy, b.dx);
 
+            const life_ratio = b.life / b.max_life;
+            const fade = life_ratio < 0.15 ? life_ratio / 0.15 : 1;
+
             ctx.save();
+            ctx.globalAlpha = fade;
 
-            // Short, sharp trail
-            const trail_len = 0.4 * growth;
-            const tx = (b.x - b.dx * trail_len) * cell_size;
-            const ty = (b.y - b.dy * trail_len) * cell_size;
+            // --- Thin tapered trail from stored positions ---
+            if (b.trail.length >= 2) {
+                ctx.lineCap = 'round';
+                for (let i = 1; i < b.trail.length; i++) {
+                    const frac = i / b.trail.length;
+                    const alpha = frac * frac * 0.4 * fade;
+                    const width = frac * base_r * 1.2;
+                    ctx.strokeStyle = `rgba(0, 200, 50, ${alpha})`;
+                    ctx.lineWidth = Math.max(0.3, width);
+                    ctx.beginPath();
+                    ctx.moveTo(b.trail[i - 1].x * cell_size, b.trail[i - 1].y * cell_size);
+                    ctx.lineTo(b.trail[i].x * cell_size, b.trail[i].y * cell_size);
+                    ctx.stroke();
+                }
+            }
 
-            const t_grad = ctx.createLinearGradient(tx, ty, px, py);
-            t_grad.addColorStop(0, 'rgba(255, 255, 240, 0)');
-            t_grad.addColorStop(0.5, 'rgba(255, 255, 220, 0.15)');
-            t_grad.addColorStop(1, 'rgba(255, 255, 240, 0.4)');
-            ctx.strokeStyle = t_grad;
-            ctx.lineWidth = base_r * 1.2;
-            ctx.lineCap = 'round';
-            ctx.beginPath();
-            ctx.moveTo(tx, ty);
-            ctx.lineTo(px, py);
-            ctx.stroke();
-
-            // Fang glow
-            ctx.shadowColor = 'rgba(255, 255, 220, 0.5)';
+            // --- Tiny green glow ---
+            ctx.shadowColor = 'rgba(0, 255, 80, 0.5)';
             ctx.shadowBlur = base_r * 3;
 
             ctx.translate(px, py);
             ctx.rotate(angle);
 
-            // Fang shape — elongated triangle pointing forward
-            const fang_len = base_r * 2.8;
-            const fang_w = base_r * 0.9;
+            // --- Tiny fang: sleek curved tooth ---
+            const fl = base_r * 2.8;  // fang length
+            const fw = base_r * 0.7;  // fang width
 
-            ctx.fillStyle = '#fffde8';
+            ctx.fillStyle = '#00cc33';
             ctx.beginPath();
-            ctx.moveTo(fang_len, 0);                 // tip
-            ctx.lineTo(-fang_len * 0.3, -fang_w);    // base left
-            ctx.quadraticCurveTo(-fang_len * 0.1, 0, -fang_len * 0.3, fang_w); // base right with curve
+            ctx.moveTo(fl, 0);
+            ctx.bezierCurveTo(fl * 0.45, -fw * 0.7, -fl * 0.1, -fw, -fl * 0.3, -fw * 0.3);
+            ctx.quadraticCurveTo(-fl * 0.38, 0, -fl * 0.3, fw * 0.3);
+            ctx.bezierCurveTo(-fl * 0.1, fw, fl * 0.45, fw * 0.7, fl, 0);
             ctx.closePath();
             ctx.fill();
 
             ctx.shadowBlur = 0;
 
-            // Inner highlight along the fang
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+            // --- Inner highlight ---
+            ctx.fillStyle = 'rgba(120, 255, 140, 0.5)';
             ctx.beginPath();
-            ctx.moveTo(fang_len * 0.8, 0);
-            ctx.lineTo(-fang_len * 0.15, -fang_w * 0.35);
-            ctx.quadraticCurveTo(-fang_len * 0.05, 0, -fang_len * 0.15, fang_w * 0.35);
+            ctx.moveTo(fl * 0.8, 0);
+            ctx.bezierCurveTo(fl * 0.35, -fw * 0.3, -fl * 0.05, -fw * 0.35, -fl * 0.15, 0);
+            ctx.bezierCurveTo(-fl * 0.05, fw * 0.35, fl * 0.35, fw * 0.3, fl * 0.8, 0);
             ctx.closePath();
+            ctx.fill();
+
+            // --- Tiny venom drip at tip ---
+            const pulse = 0.5 + Math.sin(b.age * 22 + b.wobble) * 0.5;
+            ctx.fillStyle = `rgba(0, 255, 80, ${0.4 * pulse})`;
+            ctx.beginPath();
+            ctx.arc(fl + base_r * 0.15, 0, base_r * 0.2 * pulse, 0, Math.PI * 2);
             ctx.fill();
 
             ctx.restore();

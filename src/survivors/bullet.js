@@ -6,8 +6,8 @@ export class Bullet {
         this.y = y;
         this.dx = dx;
         this.dy = dy;
-        this.speed = 18;
-        this.radius = 0.2;
+        this.speed = 20;
+        this.radius = 0.15;
         this.life = 0.5;
         this.max_life = 0.5;
         this.age = 0;
