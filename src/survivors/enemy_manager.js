@@ -21,7 +21,7 @@ export class EnemyManager {
             spawn_interval: Math.max(300, 1200 - mins * 250),
             spawn_count: Math.floor(3 + mins * 1.5),
             speed: 1.5 + mins * 0.3,
-            hp: 3 + Math.floor(mins / 3),
+            hp: (3 + Math.floor(mins / 3)) * 100,
         };
     }
 
@@ -67,7 +67,7 @@ export class EnemyManager {
                     } else {
                         const dead = e.take_damage();
                         if (damage_numbers) {
-                            damage_numbers.emit(e.x, e.y - e.radius, 1, false);
+                            damage_numbers.emit(e.x, e.y - e.radius, 100, false);
                         }
                         if (dead) {
                             const fx = Math.floor(e.x);

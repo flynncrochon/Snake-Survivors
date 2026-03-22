@@ -5,13 +5,13 @@ export class Enemy {
         this.speed = speed;
         this.hp = hp;
         this.max_hp = hp;
-        this.radius = hp > 1 ? 0.45 : 0.35;
+        this.radius = hp > 100 ? 0.45 : 0.35;
         this.alive = true;
     }
 
     get color() {
-        if (this.max_hp >= 3) return '#a00';
-        if (this.max_hp >= 2) return '#c22';
+        if (this.max_hp >= 300) return '#a00';
+        if (this.max_hp >= 200) return '#c22';
         return '#c00';
     }
 
@@ -24,7 +24,7 @@ export class Enemy {
         this.y += (dy / dist) * this.speed * dt;
     }
 
-    take_damage(amount = 1) {
+    take_damage(amount = 100) {
         this.hp -= amount;
         if (this.hp <= 0) {
             this.alive = false;

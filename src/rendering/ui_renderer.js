@@ -1,3 +1,5 @@
+import { get_powerup_icon, ICON_SIZE } from './powerup_icons.js';
+
 export class UIRenderer {
     draw_overlay(ctx, text, w, h) {
         if (h === undefined) { h = w; }
@@ -63,7 +65,7 @@ export class UIRenderer {
         ctx.fillText('CHOOSE AN ITEM', w / 2, 60);
 
         const card_width = 160;
-        const card_height = 200;
+        const card_height = 250;
         const gap = 20;
         const total_width = items.length * card_width + (items.length - 1) * gap;
         const start_x = (w - total_width) / 2;
@@ -97,11 +99,20 @@ export class UIRenderer {
             ctx.font = '11px monospace';
             ctx.fillText(item.rarity, x + card_width / 2, y + 52);
 
+            // Draw SVG icon
+            const icon = item.id ? get_powerup_icon(item.id) : null;
+            if (icon) {
+                const icon_draw_size = 48;
+                const icon_x = x + (card_width - icon_draw_size) / 2;
+                const icon_y = y + 62;
+                ctx.drawImage(icon, icon_x, icon_y, icon_draw_size, icon_draw_size);
+            }
+
             ctx.fillStyle = '#ccc';
             ctx.font = '11px monospace';
             const words = item.description.split(' ');
             let line = '';
-            let line_y = y + 80;
+            let line_y = y + 126;
             for (const word of words) {
                 const test = line + word + ' ';
                 if (test.length > 18) {

@@ -85,7 +85,7 @@ export class BulletManager {
                 if (dist < b.radius + e.radius) {
                     b.alive = false;
                     const is_crit = this.crit_chance > 0 && Math.random() < this.crit_chance;
-                    const dmg = 1 + this.bonus_dmg + (is_crit ? 1 : 0);
+                    const dmg = (1 + this.bonus_dmg + (is_crit ? 1 : 0)) * 100;
                     const dead = e.take_damage(dmg);
                     if (damage_numbers) {
                         damage_numbers.emit(e.x, e.y - e.radius, dmg, is_crit);

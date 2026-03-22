@@ -27,7 +27,7 @@ export class PoisonMortar {
     }
 
     get_damage() {
-        return 1 + Math.floor(this.level / 3);
+        return (1 + Math.floor(this.level / 3)) * 100;
     }
 
     update(dt, snake, enemy_manager, arena, particles, cell_size, damage_numbers) {

@@ -21,6 +21,7 @@ import { BulletManager } from '../survivors/bullet_manager.js';
 import { DamageNumberSystem } from '../survivors/damage_numbers.js';
 import { PoisonMortar } from '../survivors/poison_mortar.js';
 import { SnakeNest } from '../survivors/snake_nest.js';
+import { get_powerup_icon } from '../rendering/powerup_icons.js';
 
 const AI_COLORS = [
     '#888', '#668', '#686', '#866', '#586', '#658', '#856',
@@ -1131,17 +1132,26 @@ export class BattleRoyaleApp {
         ctx.fillStyle = hp <= 1 ? '#f44' : '#fff';
         ctx.fillText(hp_str, 12, 50);
 
+        const icon_size = 20;
+        const icon_gap = 4;
+        let icon_x = 12;
+        const icon_y = 68;
         const rarity_colors = { common: '#888', uncommon: '#4a4', rare: '#44f', legendary: '#fa0', ultra: '#f22' };
-        let powerup_y = 68;
-        ctx.font = 'bold 11px monospace';
-        ctx.textAlign = 'left';
         for (const def of VS_POWERUP_DEFS) {
             const lvl = this.vs_powerups[def.id];
             if (lvl > 0) {
-                ctx.fillStyle = rarity_colors[def.rarity] || '#fff';
-                const label = def.one_time ? `\u25c6 ${def.name}` : `\u25c6 ${def.name} Lv${lvl}`;
-                ctx.fillText(label, 12, powerup_y);
-                powerup_y += 16;
+                const icon = get_powerup_icon(def.id);
+                if (icon) {
+                    ctx.drawImage(icon, icon_x, icon_y, icon_size, icon_size);
+                    if (!def.one_time && lvl > 1) {
+                        ctx.fillStyle = rarity_colors[def.rarity] || '#fff';
+                        ctx.font = 'bold 9px monospace';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'top';
+                        ctx.fillText(lvl, icon_x + icon_size / 2, icon_y + icon_size + 1);
+                    }
+                    icon_x += icon_size + icon_gap;
+                }
             }
         }
 
