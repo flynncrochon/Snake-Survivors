@@ -1,7 +1,7 @@
 const GREY_TICK_RATE = 60;         // ms per grid move — twice as fast as player
 const GREY_LIFETIME = 10000;       // 10 seconds alive
 const GREY_FIRST_SPAWN = 90000;    // 90 seconds before first spawn
-const GREY_SPAWN_INTERVAL = 40000; // every 40 seconds after that
+const GREY_SPAWN_INTERVAL = 90000; // every 1:30 after that
 const WALL_LENGTH = 12;            // ticks spent sweeping = cells of wall
 
 export class GreySnakeManager {
