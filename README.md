@@ -50,7 +50,3 @@ This is the big one. Vampire Survivors-style roguelike where you fight off waves
 - **Space / Enter** — restart after death, confirm selections
 - **1-9** — quick-select powerups during level-up
 - **F2** — evolution menu (Survivors)
-
-## Running it
-
-Just open `index.html` in a browser. That's it. Pure vanilla JS, no frameworks, no npm, no build tools.
