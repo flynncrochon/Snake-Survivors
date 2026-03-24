@@ -987,7 +987,7 @@ export class BattleRoyaleApp {
                     const choices = [];
                     const remaining = [...pool];
                     for (let i = 0; i < 3 && remaining.length > 0; i++) {
-                        const weights = remaining.map(p => this.vs_powerups[p.id] > 0 ? 3 : 1);
+                        const weights = remaining.map(p => this.vs_powerups[p.id] > 0 ? 5 : 1);
                         const total = weights.reduce((a, b) => a + b, 0);
                         let r = Math.random() * total;
                         let idx = 0;
