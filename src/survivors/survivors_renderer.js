@@ -246,6 +246,17 @@ export class SurvivorsRenderer {
         ctx.strokeRect(0, 0, total, total);
     }
 
+    _grey_buf_needed(grey_snake) {
+        let max = 256;
+        for (const trail of grey_snake.dead_trails) {
+            if (trail.length > max) max = trail.length;
+        }
+        for (const gs of grey_snake.snakes) {
+            if (gs.segments.length > max) max = gs.segments.length;
+        }
+        return max;
+    }
+
     render_grey_snakes(ctx, grey_snake, cell_size, cam_offset_x, cam_offset_y) {
         if (!grey_snake) return;
         const now = performance.now();
@@ -257,8 +268,15 @@ export class SurvivorsRenderer {
         const half_px = seg_px >> 1;
 
         // Reuse position buffers — avoid allocating {x,y} objects per segment per frame
-        const gx_buf = this._gs_px || (this._gs_px = new Float64Array(128));
-        const gy_buf = this._gs_py || (this._gs_py = new Float64Array(128));
+        // Grey snakes can have ~168 segments (LIFETIME/TICK_RATE), and dead trails
+        // from multiple snakes can be even longer. Size generously.
+        const needed = this._grey_buf_needed(grey_snake);
+        if (!this._gs_px || this._gs_px.length < needed) {
+            this._gs_px = new Float64Array(needed);
+            this._gs_py = new Float64Array(needed);
+        }
+        const gx_buf = this._gs_px;
+        const gy_buf = this._gs_py;
 
         // Inline draw_segs using buffers instead of positions[] array
         const _draw_segs_buf = (count, segs_data, color) => {

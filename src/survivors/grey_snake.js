@@ -31,7 +31,9 @@ export class GreySnakeManager {
 
             if (now - gs.spawn_time >= gs.lifetime) {
                 gs.alive = false;
-                this.dead_trails.push(gs.segments.map(s => ({ x: s.x, y: s.y })));
+                const trail = gs.segments.map(s => ({ x: s.x, y: s.y }));
+                gs._dead_ref = trail;
+                this.dead_trails.push(trail);
                 continue;
             }
 
@@ -46,15 +48,11 @@ export class GreySnakeManager {
             }
         }
 
-        // Clean up dead
+        // Clean up dead snakes
         for (let i = this.snakes.length - 1; i >= 0; i--) {
             const gs = this.snakes[i];
             if (!gs.alive) {
-                let already = false;
-                for (const d of this.dead_trails) {
-                    if (d === gs._dead_ref) { already = true; break; }
-                }
-                if (!already) {
+                if (!gs._dead_ref) {
                     const trail = gs.segments.map(s => ({ x: s.x, y: s.y }));
                     gs._dead_ref = trail;
                     this.dead_trails.push(trail);
