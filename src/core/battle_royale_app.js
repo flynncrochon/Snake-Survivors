@@ -14,7 +14,7 @@ import { SoloAutopilot } from '../snake/solo_autopilot.js';
 import { Arena } from '../arena/arena.js';
 import { ZoneShrinker } from '../arena/zone_shrinker.js';
 import { Input } from '../input/input.js';
-import { play_eat_sound } from '../audio/sound.js';
+import { play_eat_sound, play_death_sound } from '../audio/sound.js';
 import { Camera } from '../survivors/camera.js';
 import { EnemyManager } from '../survivors/enemy_manager.js';
 import { SurvivorsRenderer } from '../survivors/survivors_renderer.js';
@@ -260,6 +260,7 @@ export class BattleRoyaleApp {
         });
 
         this.fsm.register('DEATH', {
+            enter() { play_death_sound(); },
             update() {
                 if (self.mode === 'battle_royale') self.update_playing();
                 self.particles.update();
@@ -779,7 +780,7 @@ export class BattleRoyaleApp {
         // Spawn chests from boss deaths
         if (this.chest_lottery && this.enemy_manager.boss_deaths.length > 0) {
             for (const bd of this.enemy_manager.boss_deaths) {
-                this.chest_lottery.spawn_chest(bd.x, bd.y);
+                this.chest_lottery.spawn_chest(bd.x, bd.y, snake.segments, this.arena.size);
             }
         }
 
@@ -900,7 +901,8 @@ export class BattleRoyaleApp {
                     if (this.vs_powerups[evo.id]) continue;
                     if (evo.requires.every(req => {
                         const def = VS_POWERUP_DEFS.find(p => p.id === req);
-                        return this.vs_powerups[req] >= (def ? def.max_rank : 8);
+                        const needed = def && def.category === 'effect' ? 1 : (def ? def.max_rank : 8);
+                        return this.vs_powerups[req] >= needed;
                     })) {
                         owned_defs.push(evo);
                         guaranteed.push(evo);
@@ -943,9 +945,24 @@ export class BattleRoyaleApp {
                 for (let i = this.arena.food.length - 1; i >= 0; i--) {
                     const f = this.arena.food[i];
                     if (Math.abs(f.x - hx) <= r && Math.abs(f.y - hy) <= r && (f.x !== hx || f.y !== hy)) {
+                        snake.grow_pending += (f.value || 1);
                         this.arena.food.splice(i, 1);
-                        snake.grow_pending++;
                         magnet_ate = true;
+                    }
+                }
+                // Also pull in hearts within magnet radius
+                for (let i = this.enemy_manager.heart_drops.length - 1; i >= 0; i--) {
+                    const h = this.enemy_manager.heart_drops[i];
+                    if (Math.abs(h.x - hx) <= r && Math.abs(h.y - hy) <= r && (h.x !== hx || h.y !== hy)) {
+                        this.enemy_manager.heart_drops.splice(i, 1);
+                        if (this.enemy_manager.player_hp < 5) {
+                            this.enemy_manager.player_hp++;
+                            if (this.particles) {
+                                const px = (hx + 0.5) * cell;
+                                const py = (hy + 0.5) * cell;
+                                this.particles.emit(px, py, 6, '#ff4466', 3);
+                            }
+                        }
                     }
                 }
                 if (magnet_ate) play_eat_sound();
@@ -1903,7 +1920,11 @@ export class BattleRoyaleApp {
             const cy = my + title_h + row * (card_h + gap);
 
             const owned = (this.vs_powerups[evo.id] || 0) > 0;
-            const req_met = evo.requires.every(r => (this.vs_powerups[r] || 0) >= 8);
+            const req_met = evo.requires.every(r => {
+                const def = VS_POWERUP_DEFS.find(p => p.id === r);
+                const needed = def && def.category === 'effect' ? 1 : 8;
+                return (this.vs_powerups[r] || 0) >= needed;
+            });
 
             // Card border
             ctx.strokeStyle = owned ? '#4f4' : (req_met ? '#0ff' : '#555');
@@ -1937,7 +1958,9 @@ export class BattleRoyaleApp {
                 const req_id = evo.requires[r];
                 const req_name = name_map[req_id] || req_id;
                 const req_lvl = this.vs_powerups[req_id] || 0;
-                const met = req_lvl >= 8;
+                const req_def = VS_POWERUP_DEFS.find(p => p.id === req_id);
+                const req_target = req_def && req_def.category === 'effect' ? 1 : 8;
+                const met = req_lvl >= req_target;
                 const ry = cy + 54 + r * 18;
 
                 const req_icon = get_powerup_icon(req_id);
@@ -1950,7 +1973,7 @@ export class BattleRoyaleApp {
 
                 ctx.fillStyle = met ? '#4f4' : '#888';
                 ctx.textAlign = 'right';
-                ctx.fillText(`${req_lvl}/8`, cx + card_w - 10, ry);
+                ctx.fillText(`${req_lvl}/${req_target}`, cx + card_w - 10, ry);
                 ctx.textAlign = 'left';
             }
         }
@@ -1967,7 +1990,9 @@ export class BattleRoyaleApp {
         const hp = this.enemy_manager ? this.enemy_manager.player_hp : 0;
         const max_hp = 5;
         const now = this.paused ? this.pause_start : performance.now();
-        const elapsed = Math.floor((now - this.survivors_start_time) / 1000);
+        const elapsed = this.survivors_final_elapsed != null
+            ? this.survivors_final_elapsed
+            : Math.floor((now - this.survivors_start_time) / 1000);
         const mins = Math.floor(elapsed / 60);
         const secs = elapsed % 60;
         const time_str = `${mins}:${secs.toString().padStart(2, '0')}`;
@@ -1978,13 +2003,16 @@ export class BattleRoyaleApp {
         ctx.textBaseline = 'top';
         ctx.fillText(`Kills: ${kills}`, 12, 12);
 
-        ctx.font = '14px monospace';
+        ctx.font = '24px monospace';
         let hp_str = '';
         for (let i = 0; i < max_hp; i++) {
             hp_str += i < hp ? '\u2665 ' : '\u2661 ';
         }
         ctx.fillStyle = hp <= 1 ? '#f44' : '#fff';
-        ctx.fillText(hp_str, 12, 50);
+        ctx.save();
+        ctx.scale(1.3, 1);
+        ctx.fillText(hp_str, 12 / 1.3, 46);
+        ctx.restore();
 
         const icon_size = 20;
         const icon_gap = 4;
@@ -2241,7 +2269,9 @@ export class BattleRoyaleApp {
             this.bullet_manager.range_mult = range_mult;
         }
         if (this.poison_mortar) {
+            const old_plague_level = this.poison_mortar.level;
             this.poison_mortar.level = this.vs_powerups.singularity_mortar ? 0 : this.vs_powerups.plague;
+            if (old_plague_level > 0 && this.poison_mortar.level === 0) this.poison_mortar.clear();
             this.poison_mortar.duration_mult = dur_mult;
             this.poison_mortar.extra_projectiles = extra;
             this.poison_mortar.radius_mult = radius_mult;
@@ -2258,7 +2288,9 @@ export class BattleRoyaleApp {
             this.singularity_mortar.fire_cooldown_mult = fire_cd_mult;
         }
         if (this.snake_nest) {
+            const old_nest_level = this.snake_nest.level;
             this.snake_nest.level = this.vs_powerups.hydra_brood ? 0 : this.vs_powerups.snake_nest;
+            if (old_nest_level > 0 && this.snake_nest.level === 0) this.snake_nest.clear();
             this.snake_nest.duration_mult = dur_mult;
             this.snake_nest.extra_projectiles = extra;
             this.snake_nest.range_mult = range_mult;
@@ -2271,7 +2303,9 @@ export class BattleRoyaleApp {
             this.hydra_brood.fire_cooldown_mult = fire_cd_mult;
         }
         if (this.fang_barrage) {
+            const old_fang_level = this.fang_barrage.level;
             this.fang_barrage.level = this.vs_powerups.serpent_gatling ? 0 : this.vs_powerups.fangs;
+            if (old_fang_level > 0 && this.fang_barrage.level === 0) this.fang_barrage.clear();
             this.fang_barrage.extra_projectiles = extra;
             this.fang_barrage.crit_chance = this.vs_powerups.crit * 0.125;
             this.fang_barrage.gorger_dmg_mult = gorger_dmg_mult;
@@ -2287,7 +2321,9 @@ export class BattleRoyaleApp {
             this.serpent_gatling.fire_cooldown_mult = fire_cd_mult;
         }
         if (this.venom_nova) {
+            const old_nova_level = this.venom_nova.level;
             this.venom_nova.level = this.vs_powerups.miasma ? 0 : this.vs_powerups.venom_nova;
+            if (old_nova_level > 0 && this.venom_nova.level === 0) this.venom_nova.clear();
             this.venom_nova.duration_mult = dur_mult;
             this.venom_nova.extra_projectiles = extra;
             this.venom_nova.radius_mult = radius_mult;
@@ -2302,7 +2338,9 @@ export class BattleRoyaleApp {
             this.miasma.crit_chance = this.vs_powerups.crit * 0.125;
         }
         if (this.sidewinder_beam) {
+            const old_sw_level = this.sidewinder_beam.level;
             this.sidewinder_beam.level = this.vs_powerups.consumption_beam ? 0 : this.vs_powerups.sidewinder;
+            if (old_sw_level > 0 && this.sidewinder_beam.level === 0) this.sidewinder_beam.clear();
             this.sidewinder_beam.extra_projectiles = extra;
             this.sidewinder_beam.crit_chance = this.vs_powerups.crit * 0.125;
             this.sidewinder_beam.range_mult = range_mult;
@@ -2319,7 +2357,9 @@ export class BattleRoyaleApp {
             this.consumption_beam.range_mult = range_mult;
         }
         if (this.ricochet_fang) {
+            const old_ric_level = this.ricochet_fang.level;
             this.ricochet_fang.level = this.vs_powerups.shatter_fang ? 0 : this.vs_powerups.ricochet;
+            if (old_ric_level > 0 && this.ricochet_fang.level === 0) this.ricochet_fang.clear();
             this.ricochet_fang.extra_projectiles = extra;
             this.ricochet_fang.crit_chance = this.vs_powerups.crit * 0.125;
             this.ricochet_fang.gorger_dmg_mult = gorger_dmg_mult;
@@ -2339,7 +2379,9 @@ export class BattleRoyaleApp {
             this.shatter_fang.fire_cooldown_mult = fire_cd_mult;
         }
         if (this.cobra_pit) {
+            const old_cobra_level = this.cobra_pit.level;
             this.cobra_pit.level = this.vs_powerups.ancient_brood_pit ? 0 : this.vs_powerups.cobra_pit;
+            if (old_cobra_level > 0 && this.cobra_pit.level === 0) this.cobra_pit.clear();
             this.cobra_pit.duration_mult = dur_mult;
             this.cobra_pit.extra_projectiles = extra;
             this.cobra_pit.crit_chance = this.vs_powerups.crit * 0.125;
@@ -2359,7 +2401,9 @@ export class BattleRoyaleApp {
             this.ancient_brood_pit.fire_cooldown_mult = fire_cd_mult;
         }
         if (this.tongue_lash) {
+            const old_tongue_level = this.tongue_lash.level;
             this.tongue_lash.level = this.vs_powerups.serpents_reckoning ? 0 : this.vs_powerups.tongue_lash;
+            if (old_tongue_level > 0 && this.tongue_lash.level === 0) this.tongue_lash.clear();
             this.tongue_lash.crit_chance = this.vs_powerups.crit * 0.125;
             this.tongue_lash.gorger_dmg_mult = gorger_dmg_mult;
             this.tongue_lash.extra_projectiles = extra;
@@ -2512,8 +2556,8 @@ export class BattleRoyaleApp {
         for (let i = this.arena.food.length - 1; i >= 0; i--) {
             const f = this.arena.food[i];
             if (interior_set.has(f.x + ',' + f.y)) {
+                snake.grow_pending += (f.value || 1);
                 this.arena.food.splice(i, 1);
-                snake.grow_pending++;
                 collected++;
             }
         }

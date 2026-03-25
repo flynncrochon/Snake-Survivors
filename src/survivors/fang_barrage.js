@@ -8,6 +8,10 @@ const FANG_LIFETIME = 0.6;
 const FANG_TURN_SPEED = 10; // radians/sec — aggressive homing
 const FANG_RADIUS = 0.18;
 
+export function fang_barrage_damage(level) {
+    return (1 + Math.floor(level / 3)) * 150;
+}
+
 export class FangBarrage {
     constructor() {
         this.fangs = [];
@@ -29,7 +33,7 @@ export class FangBarrage {
     }
 
     get_damage() {
-        return (1 + Math.floor(this.level / 3)) * 150;
+        return fang_barrage_damage(this.level);
     }
 
     update(dt, snake, enemy_manager, arena, particles, cell_size, damage_numbers) {

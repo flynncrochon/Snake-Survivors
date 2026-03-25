@@ -1,4 +1,5 @@
 import { play_mortar_launch, play_gravity_well, play_explosion } from '../audio/sound.js';
+import { poison_mortar_damage } from './poison_mortar.js';
 
 const MORTAR_RANGE = 18;
 const MORTAR_RANGE_SQ = MORTAR_RANGE * MORTAR_RANGE;
@@ -9,7 +10,8 @@ const PULL_DURATION = 2.0;
 const PULL_RADIUS = 4;
 const PULL_STRENGTH = 6.0;
 const DETONATION_DAMAGE = 2500;
-const PULL_TICK_DAMAGE = 80;
+const EVO_TICK_SCALE = 16 / 15; // 106.7% of base lvl-8 tick → 400
+const PULL_TICK_DAMAGE = Math.round(poison_mortar_damage(8) * EVO_TICK_SCALE);
 const PULL_TICK_INTERVAL = 0.4;
 const GRID_PULL_INTERVAL = 0.16;
 const MAX_TRAIL_POINTS = 40;

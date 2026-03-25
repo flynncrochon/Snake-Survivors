@@ -280,6 +280,21 @@ export function play_pool_tick() {
     });
 }
 
+// ---- Death (descending doom + static burst) ----
+
+export function play_death_sound() {
+    const ac = get_ctx();
+    if (ac.state === 'suspended') ac.resume();
+    const t = ac.currentTime;
+    // Low descending tone
+    const o1 = make_osc(ac, 'sawtooth', 300, 1.0, 0.6);
+    o1.frequency.exponentialRampToValueAtTime(40, t + 0.5);
+    // Sub-bass thud
+    make_osc(ac, 'sine', 60, 0.9, 0.4);
+    // Static burst
+    make_noise(ac, 0.7, 0.3);
+}
+
 // ---- Chest open (dramatic reveal) ----
 
 export function play_chest_open() {

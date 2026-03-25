@@ -1,4 +1,5 @@
 import { play_fang_fire, play_fang_hit, play_shatter } from '../audio/sound.js';
+import { ricochet_fang_damage } from './ricochet_fang.js';
 
 const SHATTER_RANGE = 12;
 const SHATTER_RANGE_SQ = SHATTER_RANGE * SHATTER_RANGE;
@@ -7,7 +8,8 @@ const SHATTER_SPEED = 22;
 const SHATTER_LIFETIME = 0.9;
 const SHATTER_TURN_SPEED = 14;
 const SHATTER_RADIUS = 0.2;
-const SHATTER_DAMAGE = 250;
+const EVO_DMG_SCALE = 1;          // 100% of base lvl-8 hit → 600
+const SHATTER_DAMAGE = Math.round(ricochet_fang_damage(8) * EVO_DMG_SCALE);
 const SHATTER_BOUNCE_RADIUS = 6;
 const SHATTER_MAX_BOUNCES = 6;
 

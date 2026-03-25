@@ -1,10 +1,12 @@
 import { play_miasma_pulse } from '../audio/sound.js';
+import { venom_nova_damage } from './venom_nova.js';
 
 const TICK_INTERVAL = 0.5;
 const BASE_RADIUS = 8.0;
 const BREATH_SPEED = 1.5;
 const BREATH_AMPLITUDE = 0.1;
-const DAMAGE = 300; // matches Venom Nova max rank
+const EVO_DMG_SCALE = 16 / 15;   // 106.7% of base lvl-8 pulse → 320
+const DAMAGE = Math.round(venom_nova_damage(8) * EVO_DMG_SCALE);
 
 export class Miasma {
     constructor() {

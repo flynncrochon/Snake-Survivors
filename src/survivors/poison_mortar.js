@@ -12,6 +12,10 @@ const POOL_RADIUS_PER_LEVEL = 0.35;
 const MAX_TRAIL_POINTS = 40;
 const MAX_POOLS = 30;
 
+export function poison_mortar_damage(level) {
+    return (1 + Math.floor(level / 3)) * 125;
+}
+
 export class PoisonMortar {
     constructor() {
         this.projectiles = [];
@@ -34,7 +38,7 @@ export class PoisonMortar {
     }
 
     get_damage() {
-        return (1 + Math.floor(this.level / 3)) * 125;
+        return poison_mortar_damage(this.level);
     }
 
     update(dt, snake, enemy_manager, arena, particles, cell_size, damage_numbers) {

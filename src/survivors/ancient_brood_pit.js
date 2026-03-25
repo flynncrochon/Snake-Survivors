@@ -1,4 +1,5 @@
 import { play_mortar_launch, play_summon_hit } from '../audio/sound.js';
+import { cobra_spit_damage } from './cobra_pit.js';
 
 const PIT_RANGE = 14;
 const PIT_RANGE_SQ = PIT_RANGE * PIT_RANGE;
@@ -22,7 +23,8 @@ const COBRA_SPIT_RANGE_SQ = 49; // 7^2
 const COBRA_SPIT_SPEED = 14;
 const COBRA_SPIT_LIFETIME = 1.0;
 const COBRA_RISE_DURATION = 0.5;
-const ANCIENT_SPIT_DAMAGE = 120;
+const EVO_SPIT_SCALE = 16 / 15;  // 106.7% of base lvl-8 spit → 320
+const ANCIENT_SPIT_DAMAGE = Math.round(cobra_spit_damage(8) * EVO_SPIT_SCALE);
 const MAX_DRIPS = 3;
 const MAX_SPIT_TRAIL = 6;
 const SEG_COUNT = 6;

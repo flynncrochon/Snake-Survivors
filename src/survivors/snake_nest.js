@@ -12,6 +12,10 @@ const HATCH_DURATION = 0.5;
 const MAX_MINI_SNAKES = 30;
 const MAX_NESTS = 25;
 
+export function snake_nest_damage(level) {
+    return (1 + Math.floor(level / 3)) * 50;
+}
+
 export class SnakeNest {
     constructor() {
         this.projectiles = [];
@@ -34,7 +38,7 @@ export class SnakeNest {
     }
 
     get_damage() {
-        return (1 + Math.floor(this.level / 3)) * 50;
+        return snake_nest_damage(this.level);
     }
 
     get_max_ticks() {

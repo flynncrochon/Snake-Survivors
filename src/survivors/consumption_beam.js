@@ -1,8 +1,10 @@
 import { play_beam_start, play_beam_tick } from '../audio/sound.js';
+import { sidewinder_tick_damage } from './sidewinder_beam.js';
 
 const BEAM_RANGE = 10;
 const TICK_INTERVAL = 0.1;        // faster ticks than base sidewinder
-const TICK_DMG = 80;
+const EVO_TICK_SCALE = 5 / 6;    // 83.3% of base lvl-8 tick → 100
+const TICK_DMG = Math.round(sidewinder_tick_damage(8) * EVO_TICK_SCALE);
 const GROWTH_PER_KILL = 3;        // direct growth instead of food drop
 const VACUUM_RADIUS = 5;          // collect fruit within this radius on kill
 

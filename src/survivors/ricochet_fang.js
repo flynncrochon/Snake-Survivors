@@ -11,6 +11,10 @@ const BASE_DAMAGE = 200;
 const BASE_BOUNCE_RADIUS = 5;        // cells — how far it can jump to next target
 const BASE_BOUNCES = 3;
 
+export function ricochet_fang_damage(level) {
+    return (1 + Math.floor(level / 3)) * BASE_DAMAGE;
+}
+
 export class RicochetFang {
     constructor() {
         this.fangs = [];
@@ -38,7 +42,7 @@ export class RicochetFang {
     }
 
     get_damage() {
-        return (1 + Math.floor(this.level / 3)) * BASE_DAMAGE;
+        return ricochet_fang_damage(this.level);
     }
 
     get_bounce_radius() {

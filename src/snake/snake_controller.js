@@ -133,8 +133,8 @@ export class SnakeController {
 
             const food_idx = arena.food.findIndex(f => f.x === head.x && f.y === head.y);
             if (food_idx !== -1) {
+                snake.grow_pending += (arena.food[food_idx].value || 1);
                 arena.food.splice(food_idx, 1);
-                snake.grow_pending++;
                 if (snake.is_player) play_eat_sound();
             }
 

@@ -38,8 +38,39 @@ export class ChestLottery {
         this.guaranteed_fulfilled = new Set();
     }
 
-    spawn_chest(x, y) {
+    spawn_chest(x, y, player_segments = [], arena_size = 200) {
+        // Avoid spawning inside the player snake — find nearest free cell
+        if (player_segments.length > 0) {
+            const occupied = new Set();
+            for (const s of player_segments) {
+                occupied.add(s.x + ',' + s.y);
+            }
+            if (occupied.has(x + ',' + y)) {
+                const pos = this._find_nearest_free(x, y, occupied, arena_size);
+                x = pos.x;
+                y = pos.y;
+            }
+        }
         this.chests.push({ x, y, spawn_time: performance.now() });
+    }
+
+    _find_nearest_free(x, y, occupied, arena_size) {
+        const visited = new Set([x + ',' + y]);
+        const queue = [{ x, y }];
+        while (queue.length > 0) {
+            const curr = queue.shift();
+            for (const [dx, dy] of [[0,1],[0,-1],[1,0],[-1,0]]) {
+                const nx = curr.x + dx;
+                const ny = curr.y + dy;
+                const nk = nx + ',' + ny;
+                if (visited.has(nk)) continue;
+                visited.add(nk);
+                if (nx < 0 || nx >= arena_size || ny < 0 || ny >= arena_size) continue;
+                if (!occupied.has(nk)) return { x: nx, y: ny };
+                queue.push({ x: nx, y: ny });
+            }
+        }
+        return { x, y };
     }
 
     check_pickup(head_x, head_y, powerup_defs, guaranteed_items = []) {
@@ -246,6 +277,7 @@ export class ChestLottery {
             }
             beam.settled_item = item;
             this.won_items.push(beam.settled_item);
+            play_roulette_settle();
         }
         this.beam_color_t = 1;
         this.phase = 'settled';

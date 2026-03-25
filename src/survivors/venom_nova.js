@@ -6,6 +6,10 @@ const RADIUS_PER_LEVEL = 0.4;
 const PULSE_VISUAL_DURATION = 0.45;
 const MAX_PULSES = 75;
 
+export function venom_nova_damage(level) {
+    return (1 + Math.floor(level / 3)) * 100;
+}
+
 export class VenomNova {
     constructor() {
         this.level = 0;
@@ -28,7 +32,7 @@ export class VenomNova {
     }
 
     get_damage() {
-        return (1 + Math.floor(this.level / 3)) * 100;
+        return venom_nova_damage(this.level);
     }
 
     get_pulse_count() {

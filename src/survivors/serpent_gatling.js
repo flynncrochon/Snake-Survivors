@@ -1,4 +1,5 @@
 import { play_gatling_fire, play_gatling_hit } from '../audio/sound.js';
+import { fang_barrage_damage } from './fang_barrage.js';
 
 const GATLING_RANGE = 11;
 const GATLING_RANGE_SQ = GATLING_RANGE * GATLING_RANGE;
@@ -7,7 +8,8 @@ const GATLING_SPEED = 24;          // faster than normal fangs
 const GATLING_LIFETIME = 0.5;
 const GATLING_TURN_SPEED = 12;     // tighter homing
 const GATLING_RADIUS = 0.14;       // smaller projectiles
-const GATLING_DAMAGE = 120;
+const EVO_DMG_SCALE = 1 / 3;      // 33.3% of base lvl-8 hit → 150
+const GATLING_DAMAGE = Math.round(fang_barrage_damage(8) * EVO_DMG_SCALE);
 const GATLING_MAX_PIERCE = 3;      // pierce through 3 enemies
 
 export class SerpentGatling {

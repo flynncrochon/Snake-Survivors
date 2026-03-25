@@ -24,6 +24,10 @@ const MAX_DRIPS = 3;
 const MAX_SPIT_TRAIL = 6;
 const SEG_COUNT = 6;
 
+export function cobra_spit_damage(level) {
+    return (1 + Math.floor(level / 2)) * 60;
+}
+
 export class CobraPit {
     constructor() {
         this.projectiles = [];
@@ -50,7 +54,7 @@ export class CobraPit {
     }
 
     get_spit_damage() {
-        return (1 + Math.floor(this.level / 2)) * 60 * this.gorger_dmg_mult * this._overflow_dmg_mult;
+        return cobra_spit_damage(this.level) * this.gorger_dmg_mult * this._overflow_dmg_mult;
     }
 
     get_max_cobras() {

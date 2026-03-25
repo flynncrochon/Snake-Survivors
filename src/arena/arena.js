@@ -27,31 +27,49 @@ export class Arena {
     }
 
     spawn_food_count(snakes, target_count) {
-        const occupied = new Set();
+        const snake_cells = new Set();
         for (const snake of snakes) {
             if (!snake.alive) continue;
             for (const s of snake.segments) {
-                occupied.add(s.x + ',' + s.y);
+                snake_cells.add(s.x + ',' + s.y);
             }
         }
+
+        const occupied = new Set(snake_cells);
         for (const f of this.food) occupied.add(f.x + ',' + f.y);
         for (const r of this.remains) occupied.add(r.x + ',' + r.y);
 
+        const w = this.safe_zone.x2 - this.safe_zone.x1 + 1;
+        const h = this.safe_zone.y2 - this.safe_zone.y1 + 1;
         const target = target_count - this.food.length;
         for (let i = 0; i < target; i++) {
-            let attempts = 0;
-            while (attempts < 100) {
-                const x = this.safe_zone.x1 + Math.floor(Math.random() * (this.safe_zone.x2 - this.safe_zone.x1 + 1));
-                const y = this.safe_zone.y1 + Math.floor(Math.random() * (this.safe_zone.y2 - this.safe_zone.y1 + 1));
-                const key = x + ',' + y;
-                if (!occupied.has(key)) {
-                    this.food.push({ x, y });
-                    occupied.add(key);
-                    break;
-                }
-                attempts++;
+            const x = this.safe_zone.x1 + Math.floor(Math.random() * w);
+            const y = this.safe_zone.y1 + Math.floor(Math.random() * h);
+            if (snake_cells.has(x + ',' + y)) {
+                // Merge into the nearest existing fruit
+                this._merge_into_nearest(x, y);
+            } else if (!occupied.has(x + ',' + y)) {
+                this.food.push({ x, y, value: 1 });
+                occupied.add(x + ',' + y);
+            } else {
+                // On existing food/remains — merge into nearest fruit
+                this._merge_into_nearest(x, y);
             }
         }
+    }
+
+    _merge_into_nearest(x, y) {
+        if (this.food.length === 0) return;
+        let best = null;
+        let best_dist = Infinity;
+        for (const f of this.food) {
+            const d = Math.abs(f.x - x) + Math.abs(f.y - y);
+            if (d < best_dist) {
+                best_dist = d;
+                best = f;
+            }
+        }
+        if (best) best.value = (best.value || 1) + 1;
     }
 
     add_remains(segments) {

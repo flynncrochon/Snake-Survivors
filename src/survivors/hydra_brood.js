@@ -1,4 +1,5 @@
 import { play_mortar_launch, play_summon, play_summon_hit } from '../audio/sound.js';
+import { snake_nest_damage } from './snake_nest.js';
 
 const NEST_RANGE = 12;
 const NEST_RANGE_SQ = NEST_RANGE * NEST_RANGE;
@@ -12,18 +13,20 @@ const HATCH_DURATION = 0.5;
 const HYDRA_LENGTH = 5;
 const HYDRA_TICK_RATE = 80;
 const HYDRA_MAX_TICKS = 70;
-const HYDRA_SPAWN_COUNT = 3;
-const HYDRA_DAMAGE = 100;
+const HYDRA_SPAWN_COUNT = 6;
+const EVO_HYDRA_SCALE = 4 / 3;   // 133% of base lvl-8 hit → 200
+const HYDRA_DAMAGE = Math.round(snake_nest_damage(8) * EVO_HYDRA_SCALE);
 
 // Headless brood snakes (from split)
 const BROOD_LENGTH = 3;
 const BROOD_TICK_RATE = 70;
 const BROOD_MAX_TICKS = 50;
-const BROOD_DAMAGE = 60;
+const EVO_BROOD_SCALE = 1;       // 100% of base lvl-8 hit → 150
+const BROOD_DAMAGE = Math.round(snake_nest_damage(8) * EVO_BROOD_SCALE);
 
 const HEAD_FORK_ANGLE = 0.4;
 const HEAD_FORK_DIST = 0.35;
-const MAX_HYDRA_SNAKES = 20;
+const MAX_HYDRA_SNAKES = 30;
 const MAX_BROOD_SNAKES = 30;
 
 export class HydraBrood {

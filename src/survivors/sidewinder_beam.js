@@ -6,6 +6,10 @@ const BASE_TICK_DMG = 15;        // damage per tick
 const BEAM_DURATION = 2.5;       // seconds the beam stays active
 const BASE_COOLDOWN = 5000;      // ms between beam activations
 
+export function sidewinder_tick_damage(level) {
+    return level * BASE_TICK_DMG;
+}
+
 export class SidewinderBeam {
     constructor() {
         this.level = 0;
@@ -26,7 +30,7 @@ export class SidewinderBeam {
     }
 
     get_tick_damage() {
-        return this.level * BASE_TICK_DMG;
+        return sidewinder_tick_damage(this.level);
     }
 
     get_range() {
