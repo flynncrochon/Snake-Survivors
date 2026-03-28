@@ -3,6 +3,15 @@ export class HUDRenderer {
         const alive_count = snakes.filter(s => s.alive).length;
         const total_count = snakes.length;
 
+        // Dark backdrop behind top-left stats
+        const left_lines = player_snake && player_snake.alive ? 3 : 1;
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+        ctx.fillRect(0, 0, 180, 8 + left_lines * 18 + 4);
+
+        // Dark backdrop behind top-center zone timer
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+        ctx.fillRect(logical_size / 2 - 60, 0, 120, 30);
+
         ctx.font = 'bold 14px monospace';
         ctx.textBaseline = 'top';
 
@@ -21,7 +30,7 @@ export class HUDRenderer {
             ctx.fillStyle = '#f44';
             ctx.font = 'bold 16px monospace';
         } else {
-            ctx.fillStyle = '#888';
+            ctx.fillStyle = '#fff';
         }
         ctx.fillText(`Zone: ${seconds}s`, logical_size / 2, 10);
 

@@ -1753,6 +1753,24 @@ export class BattleRoyaleApp {
     }
 
     render_solo_hud(ctx, size) {
+        // Dark backdrop behind top-left stats
+        const left_h = this.solo_high_score > 0 ? 52 : 30;
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+        ctx.fillRect(0, 0, 170, left_h);
+
+        // Dark backdrop behind top-right length/boost
+        if (this.player_snake) {
+            const len_y = this.is_mobile ? 142 : 0;
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+            ctx.fillRect(size - 140, len_y, 140, 48);
+        }
+
+        // Dark backdrop behind center status (autopilot/invuln)
+        if (this.solo_autopilot.active || this.invulnerable) {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+            ctx.fillRect(size / 2 - 110, 0, 220, 30);
+        }
+
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 16px monospace';
         ctx.textAlign = 'left';
@@ -1760,13 +1778,13 @@ export class BattleRoyaleApp {
         ctx.fillText(`Score: ${this.solo_score}`, 12, 12);
 
         if (this.solo_high_score > 0) {
-            ctx.fillStyle = '#555';
+            ctx.fillStyle = '#ccc';
             ctx.font = '12px monospace';
             ctx.fillText(`Best: ${this.solo_high_score}`, 12, 34);
         }
 
         if (this.player_snake) {
-            ctx.fillStyle = '#888';
+            ctx.fillStyle = '#fff';
             ctx.font = '12px monospace';
             ctx.textAlign = 'right';
             const len_y = this.is_mobile ? 142 : 12;
@@ -1775,7 +1793,7 @@ export class BattleRoyaleApp {
 
         if (!this.solo_autopilot.active && !this.invulnerable) {
             const boost_secs = ((GREEN_BOOST_BASE_MS + GREEN_BOOST_SCALE_MS * this.normal_fruits_eaten) / 1000).toFixed(1);
-            ctx.fillStyle = '#0f0';
+            ctx.fillStyle = '#fff';
             ctx.font = '11px monospace';
             ctx.textAlign = 'right';
             ctx.fillText(`Boost: ${boost_secs}s`, size - 12, 30);
@@ -1783,7 +1801,7 @@ export class BattleRoyaleApp {
 
         if (this.solo_autopilot.active) {
             const secs = (this.solo_autopilot.time_remaining / 1000).toFixed(1);
-            ctx.fillStyle = '#0f0';
+            ctx.fillStyle = '#fff';
             ctx.font = 'bold 14px monospace';
             ctx.textAlign = 'center';
             ctx.fillText(`AUTOPILOT — ${secs}s`, size / 2, 12);
@@ -1792,7 +1810,7 @@ export class BattleRoyaleApp {
         if (this.invulnerable) {
             const remaining = Math.max(0, INVULN_DURATION - (performance.now() - this.invuln_start));
             const secs = (remaining / 1000).toFixed(1);
-            ctx.fillStyle = '#0ff';
+            ctx.fillStyle = '#fff';
             ctx.font = 'bold 14px monospace';
             ctx.textAlign = 'center';
             ctx.fillText(`INVULNERABLE — ${secs}s`, size / 2, 12);
@@ -2373,6 +2391,21 @@ export class BattleRoyaleApp {
         const secs = elapsed % 60;
         const time_str = `${mins}:${secs.toString().padStart(2, '0')}`;
 
+        // Dark backdrop behind top-left stats (kills, best, hearts, weapon/effect slots)
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+        ctx.fillRect(0, 0, 190, 120);
+
+        // Dark backdrop behind top-center time
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+        ctx.fillRect(w / 2 - 50, 0, 100, 30);
+
+        // Dark backdrop behind top-right length
+        if (this.player_snake) {
+            const len_y = this.is_mobile ? 142 : 0;
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+            ctx.fillRect(w - 130, len_y, 130, 30);
+        }
+
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 16px monospace';
         ctx.textAlign = 'left';
@@ -2478,13 +2511,13 @@ export class BattleRoyaleApp {
             }
         }
 
-        ctx.fillStyle = '#888';
+        ctx.fillStyle = '#fff';
         ctx.font = 'bold 14px monospace';
         ctx.textAlign = 'center';
         ctx.fillText(time_str, w / 2, 12);
 
         if (this.player_snake) {
-            ctx.fillStyle = '#888';
+            ctx.fillStyle = '#fff';
             ctx.font = '12px monospace';
             ctx.textAlign = 'right';
             const len_y = this.is_mobile ? 142 : 12;
@@ -2492,7 +2525,7 @@ export class BattleRoyaleApp {
         }
 
         if (this.survivors_high_score > 0) {
-            ctx.fillStyle = '#444';
+            ctx.fillStyle = '#ccc';
             ctx.font = '11px monospace';
             ctx.textAlign = 'left';
             ctx.fillText(`Best: ${this.survivors_high_score} kills`, 12, 34);
@@ -2514,7 +2547,7 @@ export class BattleRoyaleApp {
         ctx.lineWidth = 1;
         ctx.strokeRect(bar_x, bar_y, bar_w, bar_h);
 
-        ctx.fillStyle = '#0f8';
+        ctx.fillStyle = '#fff';
         ctx.font = 'bold 10px monospace';
         ctx.textAlign = 'right';
         ctx.textBaseline = 'middle';

@@ -86,7 +86,7 @@ export class UIRenderer {
             const x = start_x + i * (card_width + gap);
             const y = card_y;
 
-            ctx.strokeStyle = i === selected_index ? '#0ff' : '#555';
+            ctx.strokeStyle = i === selected_index ? '#fff' : '#555';
             ctx.lineWidth = i === selected_index ? 3 : 1;
             ctx.strokeRect(x, y, card_width, card_height);
 
