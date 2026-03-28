@@ -50,8 +50,9 @@ const AI_COLORS = [
 ];
 
 const SOLO_FOOD_COUNT = 5;
-const SOLO_TICK_RATE = 130;
-const SOLO_BOOST_TICK_RATE = 40;
+const MOB_SLOW = is_mobile() ? 1.4 : 1;
+const SOLO_TICK_RATE = 130 * MOB_SLOW;
+const SOLO_BOOST_TICK_RATE = 40 * MOB_SLOW;
 const GREEN_BOOST_BASE_MS = 250;
 const GREEN_BOOST_SCALE_MS = 120;
 const INVULN_DURATION = 2000;
@@ -966,7 +967,7 @@ export class BattleRoyaleApp {
             return;
         }
 
-        if (now - this.last_tick_time >= VS_TICK_RATE) {
+        if (now - this.last_tick_time >= VS_TICK_RATE * MOB_SLOW) {
             const dir = this.input.dequeue();
             if (dir) {
                 if (dir.dx !== -snake.direction.dx || dir.dy !== -snake.direction.dy) {
@@ -1370,7 +1371,7 @@ export class BattleRoyaleApp {
     update_battle_royale() {
         const now = performance.now();
 
-        if (now - this.last_tick_time >= TICK_RATE) {
+        if (now - this.last_tick_time >= TICK_RATE * MOB_SLOW) {
             AIController.reset_claims();
             for (const ai of this.ai_controllers) {
                 if (!ai.snake.alive) continue;
@@ -1720,7 +1721,7 @@ export class BattleRoyaleApp {
         let t = 1;
         const tick_rate = this.mode === 'solo'
             ? (this.solo_boosted ? SOLO_BOOST_TICK_RATE : SOLO_TICK_RATE)
-            : TICK_RATE;
+            : TICK_RATE * MOB_SLOW;
         if (this.last_tick_time > 0) {
             const raw = Math.min((performance.now() - this.last_tick_time) / tick_rate, 1);
             t = 1 - (1 - raw) * (1 - raw);
@@ -1768,7 +1769,8 @@ export class BattleRoyaleApp {
             ctx.fillStyle = '#888';
             ctx.font = '12px monospace';
             ctx.textAlign = 'right';
-            ctx.fillText(`Length: ${this.player_snake.length}`, size - 12, 12);
+            const len_y = this.is_mobile ? 142 : 12;
+            ctx.fillText(`Length: ${this.player_snake.length}`, size - 12, len_y);
         }
 
         if (!this.solo_autopilot.active && !this.invulnerable) {
@@ -1839,7 +1841,7 @@ export class BattleRoyaleApp {
 
         let t = 1;
         if (this.last_tick_time > 0) {
-            t = Math.min((now - this.last_tick_time) / VS_TICK_RATE, 1);
+            t = Math.min((now - this.last_tick_time) / (VS_TICK_RATE * MOB_SLOW), 1);
         }
 
         const dt = this._last_frame_time ? (now - this._last_frame_time) / 1000 : 0.016;
@@ -2377,16 +2379,32 @@ export class BattleRoyaleApp {
         ctx.textBaseline = 'top';
         ctx.fillText(`Kills: ${kills}`, 12, 12);
 
-        ctx.font = '24px monospace';
-        let hp_str = '';
+        // Draw SVG-style hearts for HP
+        const heart_size = 14;
+        const heart_gap = 6;
+        const heart_y = 50;
         for (let i = 0; i < max_hp; i++) {
-            hp_str += i < hp ? '\u2665 ' : '\u2661 ';
+            const hx = 12 + i * (heart_size * 2 + heart_gap) + heart_size;
+            const hy = heart_y + heart_size * 0.3;
+            const filled = i < hp;
+            const s = heart_size;
+
+            ctx.beginPath();
+            ctx.moveTo(hx, hy + s * 0.5);
+            ctx.bezierCurveTo(hx - s * 0.6, hy + s * 0.1, hx - s * 0.6, hy - s * 0.5, hx - s * 0.3, hy - s * 0.5);
+            ctx.bezierCurveTo(hx - s * 0.05, hy - s * 0.5, hx, hy - s * 0.25, hx, hy - s * 0.1);
+            ctx.bezierCurveTo(hx, hy - s * 0.25, hx + s * 0.05, hy - s * 0.5, hx + s * 0.3, hy - s * 0.5);
+            ctx.bezierCurveTo(hx + s * 0.6, hy - s * 0.5, hx + s * 0.6, hy + s * 0.1, hx, hy + s * 0.5);
+
+            if (filled) {
+                ctx.fillStyle = hp <= 1 ? '#f44' : '#ff2244';
+                ctx.fill();
+            } else {
+                ctx.strokeStyle = '#666';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+            }
         }
-        ctx.fillStyle = hp <= 1 ? '#f44' : '#fff';
-        ctx.save();
-        ctx.scale(1.3, 1);
-        ctx.fillText(hp_str, 12 / 1.3, 46);
-        ctx.restore();
 
         const icon_size = 20;
         const icon_gap = 4;
@@ -2469,7 +2487,8 @@ export class BattleRoyaleApp {
             ctx.fillStyle = '#888';
             ctx.font = '12px monospace';
             ctx.textAlign = 'right';
-            ctx.fillText(`Length: ${this.player_snake.length}`, w - 12, 12);
+            const len_y = this.is_mobile ? 142 : 12;
+            ctx.fillText(`Length: ${this.player_snake.length}`, w - 12, len_y);
         }
 
         if (this.survivors_high_score > 0) {

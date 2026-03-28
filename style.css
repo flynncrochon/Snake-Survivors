@@ -25,11 +25,13 @@ body {
 
 canvas {
     display: block;
-    will-change: transform;
 }
 
 #game {
     background: #000;
+    will-change: transform;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
 }
 
 #hud {

@@ -82,7 +82,7 @@ export class Input {
     _create_pause_btn() {
         const btn = document.createElement('button');
         btn.id = 'mobile-pause';
-        btn.textContent = '\u23F8';
+        btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><rect x="4" y="3" width="4" height="14" rx="1"/><rect x="12" y="3" width="4" height="14" rx="1"/></svg>';
         btn.style.display = 'none';
 
         btn.addEventListener('touchstart', (e) => {
