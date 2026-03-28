@@ -1,19 +1,29 @@
-# Ultimate Snake
+# Snake Survivors
 
-A browser-based snake game with three game modes, a full roguelike survivors mode, and way too many weapons. No dependencies, no build step — just open `index.html` and go.
+Browser-based roguelike where you're a snake fighting off endless waves of enemies.
 
-## Game Modes
+## Running it
 
-### Solo
-Classic snake. Eat food, grow longer, try not to die. High scores saved locally.
+No dependencies or build tools needed, but you do need a local server since the game uses ES modules.
 
-### Battle Royale
-You vs 15 AI snakes. The arena shrinks every 8 seconds. Last one alive wins.
+```bash
+# python
+python -m http.server 8000
 
-### Survivors
-Vampire Survivors-style roguelike where you fight off waves of enemies for 20 minutes across a huge arena. Enemies get tougher and split when killed. You level up by collecting XP and pick from random powerups each level — there are 16 base weapons and 8 evolutions you can unlock by combining the right ones.
+# node
+npx http-server
 
-**Weapons:**
+```
+
+Then open `http://localhost:8000` in your browser.
+
+## How it works
+
+You move around a big arena, kill enemies, grab XP, and pick powerups when you level up. Enemies get harder over time and split when they die. There are 9 weapons, 9 buffs, and 9 evolutions you can unlock by combining the right ones.
+
+## Weapons
+
+- Venom Shot — auto-fire venom projectiles at nearby enemies
 - Viper Fangs — homing fang projectiles
 - Plague Mortar — toxic bombs that leave poison zones
 - Snake Nest — lob eggs that hatch mini snakes
@@ -23,7 +33,8 @@ Vampire Survivors-style roguelike where you fight off waves of enemies for 20 mi
 - Cobra Pit — spawns spitting cobras
 - Tongue Lash — forked tongue whip that slows enemies
 
-**Buffs:**
+## Buffs
+
 - Graviton — bigger fruit pickup radius
 - Rapid Fire — faster attack speed
 - Dead Eye — crit chance
@@ -32,8 +43,12 @@ Vampire Survivors-style roguelike where you fight off waves of enemies for 20 mi
 - Coiled Volley — extra projectiles
 - Toxic Expanse — bigger AOE
 - Serpent's Reach — longer weapon range
+- Serpent's Scales — shield that absorbs hits
 
-**Evolutions** (combine two specific powerups to unlock):
+## Evolutions
+
+Combine two specific powerups to unlock these:
+
 - Miasma (Venom Nova + Toxic Expanse) — permanent toxic fog
 - Hydra Brood (Snake Nest + Coiled Volley) — two-headed mini snakes that split on death
 - Serpent's Gatling (Viper Fangs + Rapid Fire) — rapid-fire piercing fangs
@@ -42,6 +57,7 @@ Vampire Survivors-style roguelike where you fight off waves of enemies for 20 mi
 - Shatter Fang (Ricochet Fang + Dead Eye) — crits shatter into chaining splinters
 - Ancient Brood Pit (Cobra Pit + Chronofield) — expanding pit that spawns ancient cobras
 - Serpent's Reckoning (Tongue Lash + Serpent's Reach) — grapple tongue that drags enemies back
+- Ouroboros (Serpent's Scales + Venom Shot) — rotating ring of fang-scales that deals passive damage
 
 ## Controls
 
@@ -49,4 +65,4 @@ Vampire Survivors-style roguelike where you fight off waves of enemies for 20 mi
 - **Escape** — pause
 - **Space / Enter** — restart after death, confirm selections
 - **1-9** — quick-select powerups during level-up
-- **F2** — evolution menu (Survivors)
+- **F2** — evolution menu
